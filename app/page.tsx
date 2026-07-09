@@ -13,7 +13,7 @@ export default function RobotikaLandingPage() {
   // State untuk Mobile Menu Navigation
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   
-  // State untuk Sticky Header Scroll Effect
+  // State untuk Sticky Header Scroll Effectf
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
 
   // State untuk Contact Form Data Integration
@@ -360,12 +360,14 @@ export default function RobotikaLandingPage() {
                   Galeri Kegiatan
                 </h2>
                 <p className="text-sm text-slate-500 mt-2">
-                  Hover untuk zoom, lihat suasana kelas robotika.
+                 Klik tombol untuk lihat semua
                 </p>
               </div>
-              <button className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs tracking-wide transition-all shadow-sm active:scale-95">
+              <a 
+      href="https://www.instagram.com/airoofficial_/"
+      target="_blank" className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs tracking-wide transition-all shadow-sm active:scale-95">
                 Lihat Semua
-              </button>
+              </a>
             </div>
 
             {/* Gallery Element Flex Responsive Grid Matrices Layout Container */}
@@ -514,34 +516,78 @@ export default function RobotikaLandingPage() {
               
               {/* Left Column Address Info Card Layout Panel */}
               <div className="lg:col-span-5 space-y-6 text-left">
-                <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">Workshop & Lab Utama</h4>
-                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                      Jl. Robotika Raya No. 42, Blok C, Jakarta Timur, DKI Jakarta 13440
-                    </p>
-                  </div>
-                </div>
+               <a 
+      rel="noopener noreferrer" className="p-6 bg-white border hover:bg-gray-200 border-slate-200/80 rounded-2xl shadow-sm flex gap-4">
+  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  </div>
 
-                <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">Saluran Email Resmi</h4>
-                    <p className="text-xs text-indigo-600 font-mono mt-1 font-semibold">halo@jmkrobotics.com</p>
-                  </div>
-                </div>
+  <div>
+    <span
+      className="text-sm font-bold text-slate-900 hover:text-blue-600 transition"
+    >
+      airoofficial_
+    </span>
 
-                <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex gap-4">
+    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+      Lihat lebih lanjut 
+    </p>
+  </div>
+</a>
+
+  <a
+  href="mailto:safitrirania32@gmail.com"
+  aria-label="Kirim email ke rashif368@gmail.com"
+  className="flex gap-4 p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm hover:bg-gray-100 transition-colors duration-200"
+>
+  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 shrink-0">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+      />
+    </svg>
+  </div>
+
+  <div>
+    <h4 className="text-sm font-bold text-slate-900">
+      Saluran Email Resmi
+    </h4>
+    <p className="mt-1 text-xs font-mono font-semibold text-indigo-600">
+      safitrirania32@gmail.com
+    </p>
+  </div>
+</a>
+
+
+
+                <a       href="https://wa.me/+6281228909492"
+      target="_blank"
+      rel="noopener noreferrer" className="p-6 hover:bg-gray-200 delay-100 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex gap-4">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -550,9 +596,13 @@ export default function RobotikaLandingPage() {
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">Hotline WhatsApp Admin</h4>
                     <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Senin - Sabtu (08.00 - 17.00 WIB)</p>
-                    <p className="text-sm font-bold text-emerald-600 font-mono mt-1">+62 812-3456-7890</p>
+                     <span
+      className="text-sm font-bold text-slate-900 hover:text-blue-600 transition"
+    >
+      +6281228909492
+    </span>
                   </div>
-                </div>
+                </a>
               </div>
 
               {/* Right Column Registration Message Input Block Forms */}
