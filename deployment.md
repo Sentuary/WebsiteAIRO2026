@@ -1,115 +1,116 @@
-# Panduan Deployment Next.js Menggunakan ZIP (Tanpa .env / Backend)
+# Panduan Deployment Website AIRO 2026
 
-Dokumen ini berisi panduan langkah demi langkah untuk melakukan deploy aplikasi **Website AIRO 2026** (Next.js) ke server (cPanel, Shared Hosting, VPS, atau Web Hosting lainnya) menggunakan file `.zip` tanpa membutuhkan file `.env`.
+Dokumen ini berisi panduan langkah demi langkah untuk melakukan deployment aplikasi **Website AIRO 2026** (Next.js) ke server (VPS / Dedicated Server / cPanel dengan dukungan Node.js) dengan mengunduh source code file `.zip` dari GitHub.
 
 ---
 
-## ⚡ Opsi 1: Static Export (Paling Mudah & Cepat)
-Jika website Anda murni frontend (HTML, CSS, JS) dan tidak membutuhkan Node.js runtime di server production, gunakan opsi **Static Export**. Hasil build berupa file statis yang bisa di-upload ke hosting mana saja (termasuk cPanel `public_html`).
+## 📋 Prasyarat Server
 
-### Langkah 1: Tambahkan Konfigurasi Export
-Buka file [next.config.ts](file:///c:/Users/Pongo/Documents/1.%20Rashif%20Workspace/WebsiteAIRO2026/next.config.ts) dan atur `output: "export"`:
+Sebelum memulai, pastikan server Anda telah terinstall:
+- **Node.js**: Versi v18.x atau lebih baru (`node -v`)
+- **npm**: Node Package Manager (`npm -v`)
+- **PM2** *(Opsional tetapi Sangat Direkomendasikan)*: Process Manager untuk menjalankan Node.js di background.
 
-```typescript
-import type { NextConfig } from "next";
+---
 
-const nextConfig: NextConfig = {
-  output: "export",
-  images: {
-    unoptimized: true, // Diperlukan jika menggunakan tag <Image> dari Next.js pada Static Export
-  },
-};
+## 🚀 Langkah Deployment
 
-export default nextConfig;
+### 1. Download ZIP dari GitHub
+Unduh file ZIP repository dari GitHub **Sentuary/WebsiteAIRO2026**.
+
+- **Cara A (Via Terminal / SSH langsung di server)**:
+  ```bash
+  wget https://github.com/Sentuary/WebsiteAIRO2026/archive/refs/heads/main.zip -O WebsiteAIRO2026.zip
+  ```
+- **Cara B (Via Browser)**:
+  Buka repository di [GitHub Sentuary/WebsiteAIRO2026](https://github.com/Sentuary/WebsiteAIRO2026), klik tombol **Code** > **Download ZIP**.
+
+---
+
+### 2. Upload ke Server
+Jika file ZIP diunduh melalui komputer lokal, upload file `WebsiteAIRO2026.zip` tersebut ke server Anda.
+
+- **Menggunakan SCP / SFTP (Terminal / FileZilla / WinSCP)**:
+  ```bash
+  scp WebsiteAIRO2026.zip user@ip_server:/path/tujuan/
+  ```
+- **Menggunakan cPanel File Manager**:
+  Masuk ke cPanel File Manager -> Buka folder direktori target -> Klik **Upload** -> Pilih file `WebsiteAIRO2026.zip`.
+
+---
+
+### 3. Extract File
+Ekstrak file `.zip` yang sudah berada di direktori server dan masuk ke folder hasil ekstraksi.
+
+- **Melalui Terminal SSH**:
+  ```bash
+  unzip WebsiteAIRO2026.zip
+  cd WebsiteAIRO2026-main
+  ```
+- **Melalui cPanel File Manager**:
+  Klik kanan file `WebsiteAIRO2026.zip` -> Pilih **Extract** -> Masuk ke folder hasil ekstrak (`WebsiteAIRO2026-main`).
+
+> 💡 **Catatan `.env` (Optional)**: Jika aplikasi memerlukan Environment Variables tambahan, buat file `.env` di dalam folder ini sebelum melakukan build.
+
+---
+
+### 4. Install Dependencies (`npm install`)
+Jalankan perintah berikut untuk mengunduh dan meng-install semua library/package yang dibutuhkan:
+
+```bash
+npm install
 ```
 
-### Langkah 2: Build Project di Lokal
-Jalankan perintah build di terminal komputer Anda:
+---
+
+### 5. Build Application (`npm run build`)
+Kompilasi project Next.js untuk lingkungan produksi (Production Build):
 
 ```bash
 npm run build
 ```
-
-Setelah proses selesai, Next.js akan membuat folder baru bernama **`out/`** yang berisi seluruh file HTML, CSS, JavaScript, dan aset publik.
-
-### Langkah 3: Kompres Folder `out/` Menjadi ZIP
-1. Masuk ke dalam folder `out/`.
-2. Pilih seluruh isi di dalam folder `out/` (bukan folder `out`-nya, tapi isinya: `index.html`, `_next/`, `public assets`, dll.).
-3. Kompres/Zip menjadi **`website.zip`**.
-
-### Langkah 4: Upload & Ekstrak di Hosting / Server
-1. Buka **File Manager** cPanel atau FTP/SFTP server Anda.
-2. Masuk ke direktori utama web Anda (biasanya `public_html` atau `/var/www/html`).
-3. **Upload** file `website.zip`.
-4. **Ekstrak** file `website.zip` langsung di direktori tersebut.
-5. Selesai! Website langsung aktif tanpa perlu install Node.js, PM2, atau konfigurasi backend.
+Proses ini akan mengoptimasi aset, halaman, dan membuat folder `.next/` yang siap dijalankan secara efisien di server production.
 
 ---
 
-## 🚀 Opsi 2: Node.js Standalone Build ZIP (Jika Menggunakan Node.js Server)
+### 6. Jalankan Aplikasi (`npm start`)
+Jalankan server Next.js production.
 
-Jika Anda tetap ingin menjalankan server Node.js (misalnya untuk fitur dynamic SSR atau fungsi internal Next.js):
+- **Opsi Direct Run (Testing)**:
+  ```bash
+  npm start
+  ```
+  *(Aplikasi berjalan di port default `3000`. Jika sesi terminal ditutup, aplikasi akan berhenti)*.
 
-### Langkah 1: Konfigurasi Standalone
-Ubah [next.config.ts](file:///c:/Users/Pongo/Documents/1.%20Rashif%20Workspace/WebsiteAIRO2026/next.config.ts):
+- **Opsi PM2 (Direkomendasikan untuk Production)**:
+  Agar aplikasi tetap berjalan terus-menerus di background walau terminal ditutup atau server di-restart:
+  ```bash
+  # Install PM2 secara global jika belum ada
+  npm install -g pm2
 
-```typescript
-import type { NextConfig } from "next";
+  # Jalankan aplikasi Next.js dengan PM2
+  pm2 start npm --name "airo-website" -- start
 
-const nextConfig: NextConfig = {
-  output: "standalone",
-};
-
-export default nextConfig;
-```
-
-### Langkah 2: Build Project
-```bash
-npm run build
-```
-
-### Langkah 3: Menyiapkan Paket Deploy ZIP
-1. Buat folder baru bernama `deploy_package`.
-2. Salin isi folder `.next/standalone` ke dalam `deploy_package`.
-3. Salin folder `public` dari root ke `deploy_package/public`.
-4. Salin folder `.next/static` ke `deploy_package/.next/static`.
-5. Kompres seluruh isi folder `deploy_package` menjadi **`deploy.zip`**.
-
-**Struktur File di Dalam ZIP:**
-```text
-deploy.zip
-├── .next/
-│   └── static/
-├── public/
-├── package.json
-└── server.js
-```
-
-### Langkah 4: Upload & Jalankan di Server
-1. Upload & ekstrak `deploy.zip` di server.
-2. Jalankan aplikasi via SSH/Terminal:
-   ```bash
-   # Menggunakan PM2
-   pm2 start server.js --name "airo-website"
-   ```
-   atau jalankan langsung:
-   ```bash
-   PORT=3000 node server.js
-   ```
+  # Simpan konfigurasi PM2 agar otomatis jalan saat server reboot
+  pm2 save
+  ```
 
 ---
 
-## 📋 Ringkasan File yang Di-ZIP
+## 🛠️ Perintah Berguna PM2
 
-| Jenis Deploy | Apa yang Dicompress ke ZIP? | Target Upload Server | Perlu Node.js di Server? |
-| :--- | :--- | :--- | :--- |
-| **Static Export** | Seluruh isi di dalam folder `out/` | `public_html` / web root | ❌ Tidak |
-| **Node.js Standalone** | Isi `.next/standalone` + `public` + `.next/static` | Folder aplikasi VPS / cPanel Node | ✅ Ya |
+| Perintah | Deskripsi |
+| :--- | :--- |
+| `pm2 status` | Melihat daftar dan status aplikasi yang berjalan |
+| `pm2 logs airo-website` | Melihat log output / error aplikasi real-time |
+| `pm2 restart airo-website` | Merestart aplikasi |
+| `pm2 stop airo-website` | Menghentikan sementara aplikasi |
 
 ---
 
 ## 🔍 Checklist Verifikasi
 
-- [ ] File ZIP berhasil dibuat dari folder build (`out/` atau `.next/standalone`).
-- [ ] Semua file ter-extract dengan benar di folder server target.
-- [ ] Website dapat diakses di browser tanpa error 404 / asset terputus.
+- [ ] File ZIP berhasil diunduh dan di-extract di server.
+- [ ] Dependencies ter-install sempurna via `npm install`.
+- [ ] Proses build sukses (`npm run build`).
+- [ ] Aplikasi berjalan aktif (`pm2 status` atau `npm start`) dan dapat diakses melalui port/domain server.
