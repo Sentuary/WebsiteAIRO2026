@@ -428,7 +428,7 @@ export default function RobotikLandingPage() {
               Pembimbing & Pengajar Kami
             </h2>
             <p className="text-sm text-slate-500 mt-3 leading-relaxed">
-              Mengenal tim Dosen Pembimbing Fakultas Teknologi Informasi URINDO dan Pengajar Profesional JMK Robotics Lab.
+              Mengenal tim Pembimbing dan Pengajar Fakultas Teknologi Informasi Universitas Respati indonesia.
             </p>
 
             {/* Top Tab Buttons: Pembimbing vs Pengajar */}
