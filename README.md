@@ -1,6 +1,6 @@
-# 🤖 Website JMK (Jasa Mengajar Robotika)
+# 🤖 Website AIRO (Artificial Intelligence Robotics)
 
-Website resmi **JMK (Jasa Mengajar Robotika)** — Platform edukasi dan pengajaran robotika modern bagi anak-anak dan mahasiswa, yang bekerja sama dengan **Fakultas Teknologi Informasi Universitas Respati Indonesia (URINDO)**.
+Website resmi **AIRO (Artificial Intelligence Robotics)** — Platform edukasi dan pengajaran robotika modern bagi anak-anak dan mahasiswa, yang bekerja sama dengan **Fakultas Teknologi Informasi Universitas Respati Indonesia (URINDO)**.
 
 Dibangun menggunakan **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **TypeScript**, serta terintegrasi dengan **Cloudinary CDN** untuk penyimpanan dan pengiriman media berkinerja tinggi.
 
@@ -21,7 +21,7 @@ Dibangun menggunakan **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v
 
 - **👥 Interactive Team Showcase (Pembimbing & Pengajar)**:
   - **12 Dosen Pembimbing** Fakultas Teknologi Informasi URINDO.
-  - **11 Pengajar Profesional** (Asisten Trainer JMK Robotics).
+  - **11 Pengajar Profesional** (Asisten Trainer AIRO Robotics).
   - **Fitur Auto-Rotate 5 Detik**: Foto & info anggota berganti secara otomatis setiap 5 detik dengan efek transisi *smooth crossfade* (`animate-team-fade`).
   - **Internal Smooth Scroll**: Daftar nama di sidebar otomatis menggulir secara independen tanpa mengganggu posisi scroll utama halaman pengguna.
 
@@ -119,4 +119,4 @@ npm run start
 
 ---
 
-Dibuat untuk mengembangkan platform **Jasa Mengajar Robotika (JMK)** secara profesional, responsif, dan hemat sumber daya.
+Dibuat untuk mengembangkan platform **AIRO (Artificial Intelligence Robotics)** secara profesional, responsif, dan hemat sumber daya.

@@ -170,22 +170,12 @@ export default function RobotikLandingPage() {
         }`}
       >
         {/* Logo Branding Icon Dashboard Link */}
-        <a href="#beranda" className="flex items-center gap-2.5 group">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-            {/* Robotic Brain Grid System Vector Graph Icon */}
-            <svg className="w-5.5 h-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="10" rx="2" />
-              <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
-              <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
-              <path d="M12 6V2M9 2h6M12 11V6" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-base font-extrabold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
-              JMK
-            </span>
-            <span className="text-[9px] text-blue-500 font-mono tracking-widest uppercase font-semibold">Jasa Mengajar Robotik</span>
-          </div>
+        <a href="#beranda" className="flex items-center group">
+          <img 
+            src="/images/logo-airo.png" 
+            alt="AIRO Logo" 
+            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+          />
         </a>
 
         {/* Desktop Navigation Links */}
@@ -276,7 +266,7 @@ export default function RobotikLandingPage() {
               </div>
               
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-                Jasa Mengajar Robotik untuk Pemula hingga Kompetisi
+                AIRO — Jasa Mengajar Robotik untuk Pemula hingga Kompetisi
               </h1>
               
               <p className="text-white/90 text-sm sm:text-base mt-6 leading-relaxed max-w-xl">
@@ -310,7 +300,7 @@ export default function RobotikLandingPage() {
                 >
                   <img 
                     src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716914/jmk-website/main/gqqicdvhajiwullzpnpg.png", 800)} 
-                    alt="Hero Robot JMK" 
+                    alt="Hero Robot AIRO" 
                     decoding="async"
                     className="w-full h-full object-contain filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] transform hover:scale-105 transition-transform duration-500"
                   />
@@ -344,7 +334,7 @@ export default function RobotikLandingPage() {
               <div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">Penjelasan Singkat Tentang Kami</h3>
                 <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                 Komunitas robotik adalah wadah bagi para penggemar dan praktisi Robotik untuk berbagi pengetahuan, pengalaman, serta ide-ide inovatif. Melalui kolaborasi dan pengembangan teknologi robotik, komunitas ini berperan dalam meningkatkan keterampilan serta mendorong terciptanya solusi yang bermanfaat bagi masyarakat.</p>
+                 AIRO adalah wadah bagi para penggemar dan praktisi Robotik untuk berbagi pengetahuan, pengalaman, serta ide-ide inovatif. Melalui kolaborasi dan pengembangan teknologi robotik, komunitas ini berperan dalam meningkatkan keterampilan serta mendorong terciptanya solusi yang bermanfaat bagi masyarakat.</p>
 
                 {/* Visi, Misi & Nilai Module Cards */}
                 <div className="space-y-4">
@@ -884,7 +874,7 @@ export default function RobotikLandingPage() {
               Poster Pembelajaran
             </h2>
             <p className="text-sm text-slate-500 mt-3 leading-relaxed">
-              Jelajahi poster resmi program pembelajaran robotik JMK. Klik poster untuk memperbesar.
+              Jelajahi poster resmi program pembelajaran robotik AIRO. Klik poster untuk memperbesar.
             </p>
 
             {/* Tab Navigation Buttons */}
@@ -941,7 +931,7 @@ export default function RobotikLandingPage() {
                     <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
                       <img 
                         src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716902/jmk-website/main/hh4hggwc254bdpt4xasv.png", 800)} 
-                        alt="Poster 1 - JMK Robotics" 
+                        alt="Poster 1 - AIRO Robotics" 
                         loading="lazy"
                         decoding="async"
                         className="w-full h-auto object-cover rounded-xl"
@@ -983,7 +973,7 @@ export default function RobotikLandingPage() {
                     <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
                       <img 
                         src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716903/jmk-website/main/fzhobxxoskmzqqdxjzou.png", 800)} 
-                        alt="Poster 2 - JMK Robotics" 
+                        alt="Poster 2 - AIRO Robotics" 
                         loading="lazy"
                         decoding="async"
                         className="w-full h-auto object-cover rounded-xl"
@@ -1296,8 +1286,8 @@ export default function RobotikLandingPage() {
       <footer className="bg-slate-900 text-slate-400 py-12 px-4 sm:px-8 border-t border-slate-800 w-full text-center sm:text-left">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-bold text-white tracking-tight">Jasa Mengajar Robotik</span>
-            <span className="text-[11px] font-mono tracking-wider text-slate-500">© 2026 JMK Robotics Lab. Hak Cipta Dilindungi Undang-Undang.</span>
+            <span className="text-sm font-bold text-white tracking-tight">AIRO (Artificial Intelligence Robotics)</span>
+            <span className="text-[11px] font-mono tracking-wider text-slate-500">© 2026 AIRO. Hak Cipta Dilindungi Undang-Undang.</span>
           </div>
           <div className="flex items-center gap-6 text-xs font-medium">
             <a href="#beranda" className="hover:text-white transition-colors">Beranda</a>
