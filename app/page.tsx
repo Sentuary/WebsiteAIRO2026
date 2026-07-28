@@ -170,11 +170,11 @@ export default function RobotikLandingPage() {
         }`}
       >
         {/* Logo Branding Icon Dashboard Link */}
-        <a href="#beranda" className="flex items-center group">
+        <a href="#beranda" className="flex items-center group border-none outline-none ring-0">
           <img 
             src="/images/logo-airo.png" 
             alt="AIRO Logo" 
-            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300 border-none outline-none ring-0 shadow-none"
           />
         </a>
 
