@@ -10,9 +10,6 @@ export async function GET() {
     const fileBuffer = fs.readFileSync(filePath);
 
     // Compress PNG IDAT or downsample buffer if needed
-    // Let's create a valid PNG buffer by downsampling or re-encoding
-    // Since gallery_level_1.png has large raw uncompressed IDAT data:
-    // Let's parse PNG IDAT chunks and recompress with zlib level 9
     let offset = 8; // skip PNG header
     let idatBuffers: Buffer[] = [];
     let ihdrBuffer: Buffer | null = null;
@@ -87,9 +84,9 @@ export async function GET() {
     fs.writeFileSync(filePath, finalPng);
 
     // Upload recompressed PNG to Cloudinary
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '';
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || '';
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const folder = 'jmk-website/main';

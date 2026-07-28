@@ -9,9 +9,9 @@ export async function GET() {
     const base64 = fileBuffer.toString('base64');
     const dataUri = `data:image/png;base64,${base64}`;
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '';
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || '';
 
     const crypto = await import('crypto');
     const timestamp = Math.floor(Date.now() / 1000).toString();

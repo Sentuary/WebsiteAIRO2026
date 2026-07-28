@@ -9,9 +9,9 @@ export async function GET() {
     const gal2Path = path.join(baseDir, 'gallery_level_2.png');
     const fileBuffer = fs.readFileSync(gal2Path);
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '';
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || '';
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const folder = 'jmk-website/main';
