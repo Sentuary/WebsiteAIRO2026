@@ -262,7 +262,7 @@ export default function RobotikLandingPage() {
             <div className="flex-1 flex flex-col items-start text-left relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold tracking-wider uppercase mb-6 backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Pembelajaran Terbuka 2026
+                Pembelajaran Terbuka {new Date().getFullYear()}
               </div>
               
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
@@ -318,7 +318,6 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         <section id="tentang" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
           <div className="text-center max-w-2xl mx-auto mb-14 reveal-element">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">SIAPA KAMI</span>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Tentang Kami & Lokasi Pembelajaran
             </h2>
@@ -413,7 +412,6 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         <section id="tim" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full border-t border-slate-200/60">
           <div className="text-center max-w-2xl mx-auto mb-12 reveal-element">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2 font-mono">TIM & PENGURUS</span>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Pembimbing & Pengajar Kami
             </h2>
@@ -602,7 +600,6 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         <section id="layanan" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
           <div className="text-center max-w-2xl mx-auto mb-12 reveal-element">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2 font-mono">PROGRAM KELAS</span>
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
               Harga & Paket Singkat
             </h2>
@@ -869,7 +866,6 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         <section id="poster" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
           <div className="text-center max-w-2xl mx-auto mb-12 reveal-element">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">DOKUMENTASI & MEDIA</span>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Poster Pembelajaran
             </h2>
@@ -1287,7 +1283,7 @@ export default function RobotikLandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex flex-col gap-1">
             <span className="text-sm font-bold text-white tracking-tight">AIRO (Artificial Intelligence Robotics)</span>
-            <span className="text-[11px] font-mono tracking-wider text-slate-500">© 2026 AIRO. Hak Cipta Dilindungi Undang-Undang.</span>
+            <span className="text-[11px] font-mono tracking-wider text-slate-500">© {new Date().getFullYear()} AIRO. Hak Cipta Dilindungi Undang-Undang.</span>
           </div>
           <div className="flex items-center gap-6 text-xs font-medium">
             <a href="#beranda" className="hover:text-white transition-colors">Beranda</a>
