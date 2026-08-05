@@ -7,6 +7,7 @@ import AdminDashboard, { BeritaItem, TeamMemberItem } from "@/components/AdminDa
 import {
   subscribeToCollection,
   seedCollectionIfEmpty,
+  saveDocument,
   verifyPinFromFirestore,
   loginAdminWithFirebase,
   logoutAdminFromFirebase,
@@ -23,24 +24,24 @@ interface FormData {
 
 // Initial Default Data
 const INITIAL_PEMBIMBING: TeamMemberItem[] = [
-  { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716915/AIRO/pembimbing/h4fiebyvmkikss8gxu0m.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716917/AIRO/pembimbing/qkfs84ryd9pnalibb1fa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716917/AIRO/pembimbing/mbtfsbzinixmdmybeynw.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716918/AIRO/pembimbing/ze0gh6zvmsx7zytoquvb.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716919/AIRO/pembimbing/iuxagqyvjhyvdqssuspo.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716920/AIRO/pembimbing/jgbv2lbrdgfiee9bupso.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716921/AIRO/pembimbing/j5m5hvvyc21m2nltlwxf.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716922/AIRO/pembimbing/vay5nqxhln5js7e8io0j.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716923/AIRO/pembimbing/vn1dbcfad3tow47uyez0.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Laboratorium Komputer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716915/AIRO/pembimbing/vndcxrfsavabs8xyyeaa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Laboratorium Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
 ];
 
 const INITIAL_PENGAJAR: TeamMemberItem[] = [
-  { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716924/AIRO/pengajar/o2yuwo3sklssw1z2lami.jpg', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716924/AIRO/pengajar/jdln0xn7zf1sje1ohrc6.jpg', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716925/AIRO/pengajar/egvglmoqzhetnxmeymz2.jpg', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
   { id: 'pengajar-4', label: 'Pengajar 4', name: 'Rifaldi Alfauzi', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
   { id: 'pengajar-5', label: 'Pengajar 5', name: 'Dinda Alya Ainsani', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
   { id: 'pengajar-6', label: 'Pengajar 6', name: 'Zhaki Ramdani', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
@@ -135,20 +136,34 @@ export default function RobotikLandingPage() {
   const [showAdminDashboard, setShowAdminDashboard] = useState<boolean>(false);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  // Sync login session with Firebase Auth
+  // Admin Login & Session Expiration Constants
+  const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 Menit Idle Timeout
+  const MAX_SESSION_MS = 4 * 60 * 60 * 1000; // 4 Jam Maksimal Sesi
+
+  // Sync login session with Firebase Auth and initialize session timestamps
   useEffect(() => {
     const unsubscribe = onAdminAuthStateChanged((user) => {
       if (user) {
         setIsLoggedIn(true);
+        const now = Date.now().toString();
         localStorage.setItem('airo_admin_logged_in', 'true');
+        if (!localStorage.getItem('airo_session_start')) {
+          localStorage.setItem('airo_session_start', now);
+        }
+        if (!localStorage.getItem('airo_last_activity')) {
+          localStorage.setItem('airo_last_activity', now);
+        }
       } else {
         setIsLoggedIn(false);
         localStorage.removeItem('airo_admin_logged_in');
+        localStorage.removeItem('airo_session_start');
+        localStorage.removeItem('airo_last_activity');
       }
     });
 
     return () => unsubscribe();
   }, []);
+
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [loginStep, setLoginStep] = useState<'pin' | 'credentials'>('pin');
   const [pinInput, setPinInput] = useState<string>('');
@@ -158,6 +173,56 @@ export default function RobotikLandingPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [selectedBeritaModal, setSelectedBeritaModal] = useState<BeritaItem | null>(null);
+
+  // Monitor Admin Session Expiration (15-Min Idle & 4-Hour Max Duration)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const checkAdminSession = () => {
+      const now = Date.now();
+      const sessionStartStr = localStorage.getItem('airo_session_start');
+      const lastActivityStr = localStorage.getItem('airo_last_activity');
+
+      const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : now;
+      const lastActivity = lastActivityStr ? parseInt(lastActivityStr, 10) : now;
+
+      // 1. Check Max Session Timeout (4 Hours)
+      if (now - sessionStart >= MAX_SESSION_MS) {
+        alert('⏰ Sesi login telah mencapai batas maksimal 4 jam. Anda telah otomatis logout demi keamanan.');
+        handleLogout();
+        return;
+      }
+
+      // 2. Check Idle Timeout (15 Minutes)
+      if (now - lastActivity >= IDLE_TIMEOUT_MS) {
+        alert('💤 Anda telah tidak aktif (idle) selama 15 menit. Sesi Admin otomatis berakhir.');
+        handleLogout();
+        return;
+      }
+    };
+
+    // Check session status every 5 seconds
+    const intervalId = setInterval(checkAdminSession, 5000);
+
+    // Reset idle timeout on user interaction (mousemove, keydown, click, scroll, touchstart)
+    const handleUserInteraction = () => {
+      const now = Date.now();
+      const lastAct = localStorage.getItem('airo_last_activity');
+      const lastTime = lastAct ? parseInt(lastAct, 10) : 0;
+      // Throttle localStorage updates to once every 2 seconds
+      if (now - lastTime > 2000) {
+        localStorage.setItem('airo_last_activity', now.toString());
+      }
+    };
+
+    const interactionEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    interactionEvents.forEach((ev) => window.addEventListener(ev, handleUserInteraction, { passive: true }));
+
+    return () => {
+      clearInterval(intervalId);
+      interactionEvents.forEach((ev) => window.removeEventListener(ev, handleUserInteraction));
+    };
+  }, [isLoggedIn]);
 
   // Subscribe to Firebase Firestore Realtime Database
   useEffect(() => {
@@ -172,7 +237,17 @@ export default function RobotikLandingPage() {
       if (data && data.length > 0) setBeritaList(data);
     });
     const unsubPembimbing = subscribeToCollection<TeamMemberItem>('pembimbing', (data) => {
-      if (data && data.length > 0) setPembimbingList(data);
+      if (data && data.length > 0) {
+        const cleaned = data.map((item) => {
+          if (item.image && item.image.includes('h4fiebyvmkikss8gxu0m.jpg')) {
+            const updated = { ...item, image: '/images/hero_robot.png' };
+            saveDocument('pembimbing', item.id, updated);
+            return updated;
+          }
+          return item;
+        });
+        setPembimbingList(cleaned);
+      }
     });
     const unsubPengajar = subscribeToCollection<TeamMemberItem>('pengajar', (data) => {
       if (data && data.length > 0) setPengajarList(data);
@@ -210,7 +285,10 @@ export default function RobotikLandingPage() {
     try {
       await loginAdminWithFirebase(emailInput, passwordInput);
       setIsLoggedIn(true);
+      const now = Date.now().toString();
       localStorage.setItem('airo_admin_logged_in', 'true');
+      localStorage.setItem('airo_session_start', now);
+      localStorage.setItem('airo_last_activity', now);
       setIsLoginModalOpen(false);
       setShowAdminDashboard(true);
       setPinInput('');
@@ -228,6 +306,8 @@ export default function RobotikLandingPage() {
     await logoutAdminFromFirebase();
     setIsLoggedIn(false);
     localStorage.removeItem('airo_admin_logged_in');
+    localStorage.removeItem('airo_session_start');
+    localStorage.removeItem('airo_last_activity');
     setShowAdminDashboard(false);
   };
 
@@ -354,14 +434,26 @@ export default function RobotikLandingPage() {
             : 'bg-white/80 backdrop-blur-md border-slate-200/80'
         }`}
       >
-        {/* Logo Branding Icon Dashboard Link */}
-        <a href="#beranda" className="flex items-center group border-none outline-none ring-0">
+        {/* Logo Branding Icon Dashboard Link - Triggers Admin Login Portal */}
+        <button 
+          onClick={() => {
+            if (isLoggedIn) {
+              setShowAdminDashboard(true);
+            } else {
+              setLoginStep('pin');
+              setLoginError(null);
+              setIsLoginModalOpen(true);
+            }
+          }}
+          className="flex items-center group border-none outline-none ring-0 cursor-pointer bg-transparent p-0"
+          title={isLoggedIn ? "Buka Dashboard Admin AIRO" : "Login Portal Admin AIRO"}
+        >
           <img 
             src="/images/logo-airo.png" 
             alt="AIRO Logo" 
             className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300 border-none outline-none ring-0 shadow-none"
           />
-        </a>
+        </button>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-7">
@@ -377,23 +469,12 @@ export default function RobotikLandingPage() {
 
         {/* Action Right CTA Context Button Component Header */}
         <div className="hidden md:flex items-center gap-3">
-          {isLoggedIn ? (
+          {isLoggedIn && (
             <button
               onClick={() => setShowAdminDashboard(true)}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-all shadow-sm flex items-center gap-1.5"
             >
               <span>🛡️ Dashboard Admin</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setLoginStep('pin');
-                setLoginError(null);
-                setIsLoginModalOpen(true);
-              }}
-              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs tracking-wide transition-all border border-slate-200 flex items-center gap-1.5"
-            >
-              <span>🔑 Login</span>
             </button>
           )}
 
@@ -440,7 +521,7 @@ export default function RobotikLandingPage() {
           <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Kontak</a>
         </nav>
         <div className="mt-auto pt-6 border-t border-slate-100 space-y-3">
-          {isLoggedIn ? (
+          {isLoggedIn && (
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
@@ -449,18 +530,6 @@ export default function RobotikLandingPage() {
               className="flex items-center justify-center w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-md"
             >
               🛡️ Dashboard Admin
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setLoginStep('pin');
-                setLoginError(null);
-                setIsLoginModalOpen(true);
-              }}
-              className="flex items-center justify-center w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition-colors border border-slate-200"
-            >
-              🔑 Login Admin
             </button>
           )}
           <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors shadow-md">
@@ -1636,7 +1705,7 @@ export default function RobotikLandingPage() {
                     autoFocus
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="airo@gmail.com"
+                    placeholder="example@gmail.com"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 bg-slate-50"
                   />
                 </div>

@@ -150,6 +150,11 @@ export default function AdminDashboard({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Reset session idle timer on CRUD activity
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('airo_last_activity', Date.now().toString());
+    }
+
     if (activeTab === 'berita') {
       const id = editingItem ? editingItem.id : `berita-${Date.now()}`;
       const updatedData: BeritaItem = {
@@ -218,6 +223,11 @@ export default function AdminDashboard({
   // Delete Item
   const handleDelete = async (id: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
+
+    // Reset session idle timer on CRUD activity
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('airo_last_activity', Date.now().toString());
+    }
 
     if (activeTab === 'berita') {
       const itemToDelete = beritaList.find((b) => b.id === id);
