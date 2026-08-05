@@ -1,8 +1,18 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { FaInstagram } from "react-icons/fa6";
+import { FaInstagram, FaEye, FaEyeSlash } from "react-icons/fa6";
 import { SiGoogleforms } from "react-icons/si";
+import AdminDashboard, { BeritaItem, TeamMemberItem } from "@/components/AdminDashboard";
+import {
+  subscribeToCollection,
+  seedCollectionIfEmpty,
+  verifyPinFromFirestore,
+  loginAdminWithFirebase,
+  logoutAdminFromFirebase,
+  onAdminAuthStateChanged,
+  seedAdminUserIfNotExist,
+} from "@/lib/firebase";
 
 interface FormData {
   name: string;
@@ -10,6 +20,75 @@ interface FormData {
   package: string;
   message: string;
 }
+
+// Initial Default Data
+const INITIAL_PEMBIMBING: TeamMemberItem[] = [
+  { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716915/AIRO/pembimbing/h4fiebyvmkikss8gxu0m.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716917/AIRO/pembimbing/qkfs84ryd9pnalibb1fa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716917/AIRO/pembimbing/mbtfsbzinixmdmybeynw.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716918/AIRO/pembimbing/ze0gh6zvmsx7zytoquvb.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716919/AIRO/pembimbing/iuxagqyvjhyvdqssuspo.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716920/AIRO/pembimbing/jgbv2lbrdgfiee9bupso.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716921/AIRO/pembimbing/j5m5hvvyc21m2nltlwxf.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716922/AIRO/pembimbing/vay5nqxhln5js7e8io0j.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716923/AIRO/pembimbing/vn1dbcfad3tow47uyez0.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Laboratorium Komputer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716915/AIRO/pembimbing/vndcxrfsavabs8xyyeaa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+];
+
+const INITIAL_PENGAJAR: TeamMemberItem[] = [
+  { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716924/AIRO/pengajar/o2yuwo3sklssw1z2lami.jpg', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716924/AIRO/pengajar/jdln0xn7zf1sje1ohrc6.jpg', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/ldke9wua/image/upload/v1784716925/AIRO/pengajar/egvglmoqzhetnxmeymz2.jpg', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-4', label: 'Pengajar 4', name: 'Rifaldi Alfauzi', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-5', label: 'Pengajar 5', name: 'Dinda Alya Ainsani', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-6', label: 'Pengajar 6', name: 'Zhaki Ramdani', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-7', label: 'Pengajar 7', name: 'Rashif Aziiz', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-8', label: 'Pengajar 8', name: 'Azhar Khaibar', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-9', label: 'Pengajar 9', name: 'Keenan Pandu Albany', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-10', label: 'Pengajar 10', name: 'Sri Diah Lestari', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-11', label: 'Pengajar 11', name: 'Siti Adriyani Salsabil', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+];
+
+const INITIAL_BERITA: BeritaItem[] = [
+  {
+    id: 'berita-1',
+    title: 'Pembukaan Pendaftaran Kelas Robotik AIRO Semester Baru FTI URINDO',
+    category: 'Pengumuman',
+    date: '5 Agustus 2026',
+    excerpt: 'AIRO Learning Center bekerjasama dengan FTI URINDO membuka pendaftaran program les robotik interaktif untuk tingkat SD, SMP, SMA & Mahasiswa.',
+    content: 'Fakultas Teknologi Informasi Universitas Respati Indonesia (URINDO) bersama AIRO Robotics resmi membuka pendaftaran kelas robotika tingkat lanjut. Pembelajaran mencakup perakitan mekanis, sensor Arduino, hingga pemrograman logika AI.',
+    image: '/images/Poster-1.png'
+  },
+  {
+    id: 'berita-2',
+    title: 'Pelatihan Dan Workshop Pemrograman Arduino & IoT Untuk Generasi Muda',
+    category: 'Workshop',
+    date: '1 Agustus 2026',
+    excerpt: 'Para peserta antusias mempelajari cara membuat otomatisasi rumah pintar dan sensor jarak menggunakan modul AI Smart Life.',
+    content: 'Workshop robotika pekan ini dihadiri puluhan peserta yang diajarkan langsung oleh tim trainer AIRO. Seluruh peserta mendapatkan kesempatan praktik langsung merakit hardware kinetik dan mengunggah kode program.',
+    image: '/images/AI-Smart-Life.png'
+  },
+  {
+    id: 'berita-3',
+    title: 'Peluncuran Modul Pembelajaran AI-Fantasy-Zoo Dan Robotika Kinetik',
+    category: 'Kegiatan',
+    date: '25 Juli 2026',
+    excerpt: 'Inovasi kurikulum baru bertema hewan melatih kreativitas kinetik dan pemahaman rasio gir mekanis anak secara menyenangkan.',
+    content: 'Modul AI-Fantasy-Zoo dirancang khusus untuk melatih kecerdasan spasial dan motorik anak melalui perakitan robot hewan interaktif.',
+    image: '/images/AI-Fantasy-Zoo.png'
+  },
+  {
+    id: 'berita-4',
+    title: 'Tim Mahasiswa FTI URINDO Raih Penghargaan Inovasi Teknologi Robotik',
+    category: 'Prestasi',
+    date: '18 Juli 2026',
+    excerpt: 'Karya robotik berbasis kecerdasan buatan dari mahasiswa URINDO berhasil meraih peringkat terbaik dalam ajang kompetisi nasional.',
+    content: 'Mahasiswa prodi Ilmu Komputer dan Sistem Informasi FTI URINDO kembali mengukir prestasi gemilang dengan menciptakan prototype lengan robot berbasis vision AI.',
+    image: '/images/gallery_level_3.jpg'
+  }
+];
 
 // Helper function to optimize Cloudinary image URLs for low-end mobile devices & auto-format
 function getOptimizedCloudinaryUrl(url: string, width: number = 800): string {
@@ -45,6 +124,112 @@ export default function RobotikLandingPage() {
   const [teamTab, setTeamTab] = useState<'pembimbing' | 'pengajar'>('pembimbing');
   const [selectedPembimbingIndex, setSelectedPembimbingIndex] = useState<number>(0);
   const [selectedPengajarIndex, setSelectedPengajarIndex] = useState<number>(0);
+
+  // Persistent State for Berita, Pengajar, & Pembimbing List (Synced with Firebase Firestore)
+  const [beritaList, setBeritaList] = useState<BeritaItem[]>(INITIAL_BERITA);
+  const [pembimbingList, setPembimbingList] = useState<TeamMemberItem[]>(INITIAL_PEMBIMBING);
+  const [pengajarList, setPengajarList] = useState<TeamMemberItem[]>(INITIAL_PENGAJAR);
+
+  // Admin Login & Session State
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState<boolean>(false);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+
+  // Sync login session with Firebase Auth
+  useEffect(() => {
+    const unsubscribe = onAdminAuthStateChanged((user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        localStorage.setItem('airo_admin_logged_in', 'true');
+      } else {
+        setIsLoggedIn(false);
+        localStorage.removeItem('airo_admin_logged_in');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [loginStep, setLoginStep] = useState<'pin' | 'credentials'>('pin');
+  const [pinInput, setPinInput] = useState<string>('');
+  const [emailInput, setEmailInput] = useState<string>('');
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [showPin, setShowPin] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [selectedBeritaModal, setSelectedBeritaModal] = useState<BeritaItem | null>(null);
+
+  // Subscribe to Firebase Firestore Realtime Database
+  useEffect(() => {
+    // Seed initial default data & Admin user profile if collections are empty
+    seedCollectionIfEmpty('berita', INITIAL_BERITA);
+    seedCollectionIfEmpty('pembimbing', INITIAL_PEMBIMBING);
+    seedCollectionIfEmpty('pengajar', INITIAL_PENGAJAR);
+    seedAdminUserIfNotExist();
+
+    // Listen to real-time updates from Firebase Firestore
+    const unsubBerita = subscribeToCollection<BeritaItem>('berita', (data) => {
+      if (data && data.length > 0) setBeritaList(data);
+    });
+    const unsubPembimbing = subscribeToCollection<TeamMemberItem>('pembimbing', (data) => {
+      if (data && data.length > 0) setPembimbingList(data);
+    });
+    const unsubPengajar = subscribeToCollection<TeamMemberItem>('pengajar', (data) => {
+      if (data && data.length > 0) setPengajarList(data);
+    });
+
+    return () => {
+      unsubBerita();
+      unsubPembimbing();
+      unsubPengajar();
+    };
+  }, []);
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setIsLoggingIn(true);
+    try {
+      const isValid = await verifyPinFromFirestore(pinInput);
+      if (isValid) {
+        setLoginStep('credentials');
+      } else {
+        setLoginError('PIN 6-digit salah! Silakan coba lagi.');
+      }
+    } catch (err: any) {
+      setLoginError('Gagal memverifikasi PIN dengan Firebase: ' + (err.message || 'Error'));
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleCredentialsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setIsLoggingIn(true);
+    try {
+      await loginAdminWithFirebase(emailInput, passwordInput);
+      setIsLoggedIn(true);
+      localStorage.setItem('airo_admin_logged_in', 'true');
+      setIsLoginModalOpen(false);
+      setShowAdminDashboard(true);
+      setPinInput('');
+      setEmailInput('');
+      setPasswordInput('');
+      setLoginStep('pin');
+    } catch (err: any) {
+      setLoginError(err.message || 'Email atau Password Admin salah!');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logoutAdminFromFirebase();
+    setIsLoggedIn(false);
+    localStorage.removeItem('airo_admin_logged_in');
+    setShowAdminDashboard(false);
+  };
 
   // Handle detection on scroll to add visual style to Header
   useEffect(() => {
@@ -179,8 +364,9 @@ export default function RobotikLandingPage() {
         </a>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7">
           <a href="#beranda" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Beranda</a>
+          <a href="#berita" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Berita</a>
           <a href="#tentang" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Tentang Kami</a>
           <a href="#tim" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Tim Kami</a>
           <a href="#layanan" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Layanan</a>
@@ -190,7 +376,27 @@ export default function RobotikLandingPage() {
         </nav>
 
         {/* Action Right CTA Context Button Component Header */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-3">
+          {isLoggedIn ? (
+            <button
+              onClick={() => setShowAdminDashboard(true)}
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>🛡️ Dashboard Admin</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setLoginStep('pin');
+                setLoginError(null);
+                setIsLoginModalOpen(true);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs tracking-wide transition-all border border-slate-200 flex items-center gap-1.5"
+            >
+              <span>🔑 Login</span>
+            </button>
+          )}
+
           <a href="#kontak" className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs tracking-wide transition-all shadow-sm">
             Hubungi Kami
           </a>
@@ -225,6 +431,7 @@ export default function RobotikLandingPage() {
         </div>
         <nav className="flex flex-col gap-4">
           <a href="#beranda" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Beranda</a>
+          <a href="#berita" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Berita</a>
           <a href="#tentang" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Tentang Kami</a>
           <a href="#tim" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Tim Kami</a>
           <a href="#layanan" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Layanan</a>
@@ -232,8 +439,31 @@ export default function RobotikLandingPage() {
           <a href="#galeri" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Galeri</a>
           <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 hover:text-blue-600 py-1 transition-colors">Kontak</a>
         </nav>
-        <div className="mt-auto pt-6 border-t border-slate-100">
-          <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-md shadow-blue-600/10">
+        <div className="mt-auto pt-6 border-t border-slate-100 space-y-3">
+          {isLoggedIn ? (
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setShowAdminDashboard(true);
+              }}
+              className="flex items-center justify-center w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-md"
+            >
+              🛡️ Dashboard Admin
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setLoginStep('pin');
+                setLoginError(null);
+                setIsLoginModalOpen(true);
+              }}
+              className="flex items-center justify-center w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition-colors border border-slate-200"
+            >
+              🔑 Login Admin
+            </button>
+          )}
+          <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors shadow-md">
             Daftar Kelas Sekarang
           </a>
         </div>
@@ -299,7 +529,7 @@ export default function RobotikLandingPage() {
                   style={{ animation: 'floatSlow 4s ease-in-out infinite' }}
                 >
                   <img 
-                    src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716914/jmk-website/main/gqqicdvhajiwullzpnpg.png", 800)} 
+                    src="/images/hero_robot.png" 
                     alt="Hero Robot AIRO" 
                     decoding="async"
                     className="w-full h-full object-contain filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] transform hover:scale-105 transition-transform duration-500"
@@ -308,6 +538,66 @@ export default function RobotikLandingPage() {
               </div>
             </div>
 
+          </div>
+        </section>
+
+        {/* ========================================== */}
+        {/* SECTION BERITA (AUTO-SCROLL MARQUEE CAROUSEL) */}
+        {/* ========================================== */}
+        <section id="berita" className="py-16 bg-slate-900 text-white overflow-hidden w-full relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-10 text-center reveal-element">
+            <span className="px-3.5 py-1.5 rounded-full bg-blue-600/30 border border-blue-500/40 text-blue-400 text-[11px] font-bold uppercase tracking-wider font-mono">
+              📰 Berita & Informasi Resmi
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-3">
+              Berita & Kegiatan Terbaru AIRO
+            </h2>
+            <p className="text-sm text-slate-400 mt-2 max-w-2xl mx-auto leading-relaxed">
+              Jelajahi berita terbaru, workshop robotika, pengumuman resmi, dan pencapaian civitas akademika AIRO Robotics.
+            </p>
+          </div>
+
+          {/* Running Card Auto-Scroll Carousel Container */}
+          <div className="w-full overflow-hidden py-4">
+            <div className="animate-marquee-left flex gap-6">
+              {[...beritaList, ...beritaList].map((item, index) => (
+                <div
+                  key={`${item.id}-${index}`}
+                  onClick={() => setSelectedBeritaModal(item)}
+                  className="w-80 sm:w-96 shrink-0 bg-slate-800/90 border border-slate-700/80 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-blue-500/50 hover:scale-[1.02] transition-all duration-300 cursor-pointer group flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="h-48 relative overflow-hidden bg-slate-950">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-3 left-3 px-3 py-1 bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md font-mono">
+                        {item.category}
+                      </span>
+                    </div>
+
+                    <div className="p-5 space-y-2">
+                      <span className="text-[11px] text-slate-400 font-mono block">📅 {item.date}</span>
+                      <h3 className="text-base font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {item.excerpt}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="px-5 pb-5 pt-2 flex items-center text-xs font-bold text-blue-400 group-hover:text-blue-300">
+                    <span>Baca Selengkapnya</span>
+                    <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -458,24 +748,11 @@ export default function RobotikLandingPage() {
               <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200/80 bg-slate-50/70 p-4 flex flex-col justify-between">
                 <div>
                   <div className="px-3 py-2 text-[11px] font-bold text-slate-400 font-mono uppercase tracking-wider mb-2">
-                    Daftar {teamTab === 'pembimbing' ? 'Pembimbing (12)' : 'Pengajar (11)'}
+                    Daftar {teamTab === 'pembimbing' ? `Pembimbing (${pembimbingList.length})` : `Pengajar (${pengajarList.length})`}
                   </div>
                   <div id="team-sidebar-scroll-container" className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
                     {teamTab === 'pembimbing'
-                      ? [
-                          { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716915/jmk-website/pembimbing/h4fiebyvmkikss8gxu0m.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716917/jmk-website/pembimbing/qkfs84ryd9pnalibb1fa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716917/jmk-website/pembimbing/mbtfsbzinixmdmybeynw.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716918/jmk-website/pembimbing/ze0gh6zvmsx7zytoquvb.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716919/jmk-website/pembimbing/iuxagqyvjhyvdqssuspo.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716920/jmk-website/pembimbing/jgbv2lbrdgfiee9bupso.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716921/jmk-website/pembimbing/j5m5hvvyc21m2nltlwxf.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716922/jmk-website/pembimbing/vay5nqxhln5js7e8io0j.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716923/jmk-website/pembimbing/vn1dbcfad3tow47uyez0.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Laboratorium Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716915/jmk-website/pembimbing/vndcxrfsavabs8xyyeaa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Ilmu Komputer', institution: 'Universitas Respati Indonesia (URINDO)' },
-                          { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', institution: 'Universitas Respati Indonesia (URINDO)' },
-                        ].map((item, idx) => (
+                      ? pembimbingList.map((item, idx) => (
                           <button
                             key={item.id}
                             id={`team-btn-pembimbing-${idx}`}
@@ -492,19 +769,7 @@ export default function RobotikLandingPage() {
                             </span>
                           </button>
                         ))
-                      : [
-                          { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716924/jmk-website/pengajar/o2yuwo3sklssw1z2lami.jpg', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716924/jmk-website/pengajar/jdln0xn7zf1sje1ohrc6.jpg', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716925/jmk-website/pengajar/egvglmoqzhetnxmeymz2.jpg', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-4', label: 'Pengajar 4', name: 'Rifaldi Alfauzi', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-5', label: 'Pengajar 5', name: 'Dinda Alya Ainsani', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-6', label: 'Pengajar 6', name: 'Zhaki Ramdani', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-7', label: 'Pengajar 7', name: 'Rashif Aziiz', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-8', label: 'Pengajar 8', name: 'Azhar Khaibar', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-9', label: 'Pengajar 9', name: 'Keenan Pandu Albany', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-10', label: 'Pengajar 10', name: 'Sri Diah Lestari', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                          { id: 'pengajar-11', label: 'Pengajar 11', name: 'Siti Adriyani Salsabil', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                        ].map((item, idx) => (
+                      : pengajarList.map((item, idx) => (
                           <button
                             key={item.id}
                             id={`team-btn-pengajar-${idx}`}
@@ -530,38 +795,9 @@ export default function RobotikLandingPage() {
               {/* Right Panel: Large Featured Card View */}
               <div className="flex-1 p-3 sm:p-5 bg-white flex flex-col justify-center items-center h-full min-h-[380px] sm:min-h-[480px]">
                 {(() => {
-                  const pembimbingData = [
-                    { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716915/jmk-website/pembimbing/h4fiebyvmkikss8gxu0m.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716917/jmk-website/pembimbing/qkfs84ryd9pnalibb1fa.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716917/jmk-website/pembimbing/mbtfsbzinixmdmybeynw.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716918/jmk-website/pembimbing/ze0gh6zvmsx7zytoquvb.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716919/jmk-website/pembimbing/iuxagqyvjhyvdqssuspo.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716920/jmk-website/pembimbing/jgbv2lbrdgfiee9bupso.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716921/jmk-website/pembimbing/j5m5hvvyc21m2nltlwxf.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716922/jmk-website/pembimbing/vay5nqxhln5js7e8io0j.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716923/jmk-website/pembimbing/vn1dbcfad3tow47uyez0.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Laboratorium Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716915/jmk-website/pembimbing/vndcxrfsavabs8xyyeaa.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Ilmu Komputer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', institution: 'Universitas Respati Indonesia' },
-                  ];
-
-                  const pengajarData = [
-                    { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716924/jmk-website/pengajar/o2yuwo3sklssw1z2lami.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716924/jmk-website/pengajar/jdln0xn7zf1sje1ohrc6.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716925/jmk-website/pengajar/egvglmoqzhetnxmeymz2.jpg', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-4', label: 'Pengajar 4', name: 'Rifaldi Alfauzi', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-5', label: 'Pengajar 5', name: 'Dinda Alya Ainsani', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-6', label: 'Pengajar 6', name: 'Zhaki Ramdani', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-7', label: 'Pengajar 7', name: 'Rashif Aziiz', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-8', label: 'Pengajar 8', name: 'Azhar Khaibar', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-9', label: 'Pengajar 9', name: 'Keenan Pandu Albany', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-10', label: 'Pengajar 10', name: 'Sri Diah Lestari', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                    { id: 'pengajar-11', label: 'Pengajar 11', name: 'Siti Adriyani Salsabil', role: 'Asisten Trainer', institution: 'Universitas Respati Indonesia' },
-                  ];
-
                   const currentMember = teamTab === 'pembimbing' 
-                    ? pembimbingData[selectedPembimbingIndex] 
-                    : pengajarData[selectedPengajarIndex];
+                    ? pembimbingList[selectedPembimbingIndex] 
+                    : pengajarList[selectedPengajarIndex];
                   
                   if (!currentMember) return null;
 
@@ -571,14 +807,14 @@ export default function RobotikLandingPage() {
                       <div className="relative w-full h-[360px] sm:h-[440px] md:h-[480px] rounded-[32px] overflow-hidden border border-slate-200/80 shadow-md bg-slate-50 flex items-center justify-center group">
                         <img 
                           key={currentMember.id}
-                          src={getOptimizedCloudinaryUrl(currentMember.image || 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716914/jmk-website/main/gqqicdvhajiwullzpnpg.png', 600)} 
+                          src={getOptimizedCloudinaryUrl(currentMember.image || '/images/hero_robot.png', 600)} 
                           alt={currentMember.name} 
                           loading="lazy"
                           decoding="async"
                           className="w-full h-full object-contain object-center p-2 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
-                            e.currentTarget.src = getOptimizedCloudinaryUrl('https://res.cloudinary.com/f2tewygu/image/upload/v1784716914/jmk-website/main/gqqicdvhajiwullzpnpg.png', 600);
+                            e.currentTarget.src = getOptimizedCloudinaryUrl('/images/hero_robot.png', 600);
                           }}
                         />
                         {/* Bottom Right Floating Badge - Matching Screenshot */}
@@ -662,7 +898,7 @@ export default function RobotikLandingPage() {
               <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-blue-500/20 hover:-translate-y-1.5 transition-all duration-300 flex flex-col overflow-hidden group reveal-element reveal-delay-1">
                 <div className="h-64 sm:h-72 bg-slate-100 relative overflow-hidden border-b border-slate-200/60 flex items-center justify-center">
                   <img 
-                    src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716899/jmk-website/main/psrzqco1e7tau4ta8p8x.png", 800)} 
+                    src="/images/AI-Fantasy-Zoo.png" 
                     alt="Tema Animal - AI Fantasy Zoo" 
                     loading="lazy"
                     decoding="async"
@@ -729,7 +965,7 @@ export default function RobotikLandingPage() {
               <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-indigo-500/20 hover:-translate-y-1.5 transition-all duration-300 flex flex-col overflow-hidden group reveal-element reveal-delay-2">
                 <div className="h-64 sm:h-72 bg-slate-100 relative overflow-hidden border-b border-slate-200/60 flex items-center justify-center">
                   <img 
-                    src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716901/jmk-website/main/aoiapqjjic9mrf4rxuam.png", 800)} 
+                    src="/images/AI-Smart-Life.png" 
                     alt="Tema Smart Life - AI Smart Life" 
                     loading="lazy"
                     decoding="async"
@@ -796,7 +1032,7 @@ export default function RobotikLandingPage() {
               <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-rose-500/20 hover:-translate-y-1.5 transition-all duration-300 flex flex-col overflow-hidden group reveal-element reveal-delay-3">
                 <div className="h-64 sm:h-72 bg-slate-100 relative overflow-hidden border-b border-slate-200/60 flex items-center justify-center">
                   <img 
-                    src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716905/jmk-website/main/mo4g3gyrcabcdc59oixy.png", 800)} 
+                    src="/images/Ukit-Advance.png" 
                     alt="Advance Smart Life - Ukit Advance" 
                     loading="lazy"
                     decoding="async"
@@ -914,7 +1150,7 @@ export default function RobotikLandingPage() {
             {(activePosterTab === 'all' || activePosterTab === 'poster1') && (
               <div 
                 className="reveal-element reveal-delay-1"
-                onClick={() => setSelectedPosterModal('https://res.cloudinary.com/f2tewygu/image/upload/v1784716902/jmk-website/main/hh4hggwc254bdpt4xasv.png')}
+                onClick={() => setSelectedPosterModal('/images/Poster-1.png')}
               >
                 <div 
                   className="group relative cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
@@ -926,7 +1162,7 @@ export default function RobotikLandingPage() {
                   <div className="bg-slate-200/90 p-4 sm:p-5 rounded-3xl border border-slate-300 shadow-2xl backdrop-blur-sm max-w-sm sm:max-w-md -rotate-6 group-hover:rotate-0 transition-transform duration-500">
                     <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
                       <img 
-                        src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716902/jmk-website/main/hh4hggwc254bdpt4xasv.png", 800)} 
+                        src="/images/Poster-1.png" 
                         alt="Poster 1 - AIRO Robotics" 
                         loading="lazy"
                         decoding="async"
@@ -956,7 +1192,7 @@ export default function RobotikLandingPage() {
             {(activePosterTab === 'all' || activePosterTab === 'poster2') && (
               <div 
                 className="reveal-element reveal-delay-2"
-                onClick={() => setSelectedPosterModal('https://res.cloudinary.com/f2tewygu/image/upload/v1784716903/jmk-website/main/fzhobxxoskmzqqdxjzou.png')}
+                onClick={() => setSelectedPosterModal('/images/Poster-2.png')}
               >
                 <div 
                   className="group relative cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
@@ -968,7 +1204,7 @@ export default function RobotikLandingPage() {
                   <div className="bg-slate-200/90 p-4 sm:p-5 rounded-3xl border border-slate-300 shadow-2xl backdrop-blur-sm max-w-sm sm:max-w-md rotate-3 group-hover:rotate-0 transition-transform duration-500">
                     <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
                       <img 
-                        src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716903/jmk-website/main/fzhobxxoskmzqqdxjzou.png", 800)} 
+                        src="/images/Poster-2.png" 
                         alt="Poster 2 - AIRO Robotics" 
                         loading="lazy"
                         decoding="async"
@@ -1065,7 +1301,7 @@ export default function RobotikLandingPage() {
               {/* Photo Card Block Module 2 */}
               <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group reveal-element reveal-delay-2">
                 <div className="h-64 overflow-hidden relative">
-                  <img src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716912/jmk-website/main/lezrqu5k1sbwcqgy2nnb.png", 800)} alt="Arduino sensor setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  <img src="/images/gallery_level_2.png" alt="Arduino sensor setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
                   <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 2</span>
                 </div>
                 <div className="p-5 flex items-center gap-3">
@@ -1077,7 +1313,7 @@ export default function RobotikLandingPage() {
               {/* Photo Card Block Module 3 */}
               <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group reveal-element reveal-delay-3">
                 <div className="h-64 overflow-hidden relative">
-                  <img src={getOptimizedCloudinaryUrl("https://res.cloudinary.com/f2tewygu/image/upload/v1784716913/jmk-website/main/gdgus6dkwlsldvkdzkhg.jpg", 800)} alt="Robotic Arm Setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  <img src="/images/gallery_level_3.jpg" alt="Robotic Arm Setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
                   <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 3</span>
                 </div>
                 <div className="p-5 flex items-center gap-3">
@@ -1298,6 +1534,179 @@ export default function RobotikLandingPage() {
       </footer>
                     
 
+      {/* Modal Lightbox for Berita Detail */}
+      {selectedBeritaModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-8"
+          onClick={() => setSelectedBeritaModal(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl p-6 flex flex-col overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedBeritaModal(null)}
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white flex items-center justify-center transition-colors shadow-lg"
+              aria-label="Tutup Berita"
+            >
+              ✕
+            </button>
+            <div className="h-64 sm:h-80 relative rounded-2xl overflow-hidden mb-5 shrink-0 bg-slate-100 border border-slate-200">
+              <img src={selectedBeritaModal.image} alt={selectedBeritaModal.title} className="w-full h-full object-cover" />
+              <span className="absolute top-4 left-4 px-3.5 py-1 bg-blue-600/90 text-white text-xs font-bold uppercase rounded-full shadow-md font-mono">
+                {selectedBeritaModal.category}
+              </span>
+            </div>
+            <span className="text-xs text-slate-400 font-mono block mb-1">📅 Published: {selectedBeritaModal.date}</span>
+            <h2 className="text-2xl font-extrabold text-slate-900 leading-tight mb-4">{selectedBeritaModal.title}</h2>
+            <p className="text-sm text-slate-600 leading-relaxed font-sans whitespace-pre-line">{selectedBeritaModal.content || selectedBeritaModal.excerpt}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Login Modal (2-Step Verification) */}
+      {isLoginModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-team-fade">
+            <div className="bg-slate-900 text-white p-6 text-center relative">
+              <button
+                onClick={() => setIsLoginModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-3 text-xl shadow-lg">
+                🔐
+              </div>
+              <h3 className="text-lg font-extrabold tracking-tight">Login Portal Admin AIRO</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                {loginStep === 'pin' ? 'Tahap 1: Verifikasi PIN Keamanan 6-Digit' : 'Tahap 2: Masukkan Email & Password Admin'}
+              </p>
+            </div>
+
+            {loginStep === 'pin' ? (
+              <form onSubmit={handlePinSubmit} className="p-6 space-y-4">
+                <div className="space-y-1 text-center">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                    PIN Keamanan (6-Digit)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      maxLength={8}
+                      required
+                      autoFocus
+                      value={pinInput}
+                      onChange={(e) => setPinInput(e.target.value)}
+                      placeholder="Masukkan 6-digit PIN..."
+                      className="w-full text-center tracking-[0.4em] font-mono text-lg pl-10 pr-10 py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 bg-slate-50 font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors"
+                      title={showPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
+                    >
+                      {showPin ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {loginError && (
+                  <p className="text-xs font-bold text-rose-600 text-center bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                    {loginError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoggingIn}
+                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-colors shadow-md disabled:opacity-50"
+                >
+                  {isLoggingIn ? 'Memverifikasi PIN Firebase...' : 'Lanjut ke Verifikasi Email & Password →'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleCredentialsSubmit} className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Email Admin</label>
+                  <input
+                    type="email"
+                    required
+                    autoFocus
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="airo@gmail.com"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 bg-slate-50"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Password Admin</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 bg-slate-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors"
+                      title={showPassword ? "Sembunyikan Password" : "Tampilkan Password"}
+                    >
+                      {showPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {loginError && (
+                  <p className="text-xs font-bold text-rose-600 text-center bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                    {loginError}
+                  </p>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    disabled={isLoggingIn}
+                    onClick={() => {
+                      setLoginStep('pin');
+                      setLoginError(null);
+                    }}
+                    className="w-1/3 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors disabled:opacity-50"
+                  >
+                    ← Kembali
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoggingIn}
+                    className="w-2/3 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-colors shadow-md disabled:opacity-50"
+                  >
+                    {isLoggingIn ? 'Memproses Firebase Auth...' : 'Masuk Dashboard Admin ✨'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Dashboard Overlay Component */}
+      <AdminDashboard
+        isOpen={showAdminDashboard}
+        onClose={() => setShowAdminDashboard(false)}
+        onLogout={handleLogout}
+        beritaList={beritaList}
+        setBeritaList={setBeritaList}
+        pengajarList={pengajarList}
+        setPengajarList={setPengajarList}
+        pembimbingList={pembimbingList}
+        setPembimbingList={setPembimbingList}
+      />
     </div>
   );
 }

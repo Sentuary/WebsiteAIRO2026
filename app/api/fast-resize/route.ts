@@ -14,7 +14,7 @@ export async function GET() {
     const apiSecret = process.env.CLOUDINARY_API_SECRET || '';
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
-    const folder = 'jmk-website/main';
+    const folder = 'AIRO/main';
     const public_id = 'gallery_level_1';
 
     const signatureString = `folder=${folder}&public_id=${public_id}&timestamp=${timestamp}${apiSecret}`;

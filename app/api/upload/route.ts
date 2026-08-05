@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
 
     let fileBuffer: Buffer | null = null;
     let base64String: string | null = null;
-    let folderName = 'jmk-website';
+    let folderName = 'AIRO';
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Call Cloudinary SDK upload function
+    // Call Cloudinary upload function
     const uploadInput = fileBuffer || base64String!;
     const result = await uploadToCloudinary(uploadInput, folderName);
 
@@ -67,6 +67,37 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         message: 'Gagal mengunggah gambar ke Cloudinary',
+        error: error.message || String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { image } = await req.json();
+    if (!image) {
+      return NextResponse.json(
+        { success: false, message: 'Parameter URL gambar wajib diisi' },
+        { status: 400 }
+      );
+    }
+
+    const success = await deleteFromCloudinary(image);
+
+    return NextResponse.json({
+      success,
+      message: success
+        ? 'Gambar lama berhasil dihapus dari Cloudinary'
+        : 'Gambar gagal dihapus atau bukan merupakan gambar Cloudinary',
+    });
+  } catch (error: any) {
+    console.error('Cloudinary Delete Error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Gagal menghapus gambar dari Cloudinary',
         error: error.message || String(error),
       },
       { status: 500 }

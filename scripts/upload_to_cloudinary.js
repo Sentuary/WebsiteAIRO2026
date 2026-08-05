@@ -17,7 +17,7 @@ async function uploadFile(filePath, folder) {
 
   try {
     const result = await cloudinary.uploader.upload(filePath, {
-      folder: `jmk-website/${folder}`,
+      folder: `AIRO/${folder}`,
       public_id: publicId,
       overwrite: true,
     });
