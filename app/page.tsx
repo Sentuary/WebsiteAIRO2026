@@ -25,7 +25,7 @@ interface FormData {
 // Initial Default Data
 const INITIAL_PEMBIMBING: TeamMemberItem[] = [
   { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
@@ -33,8 +33,8 @@ const INITIAL_PEMBIMBING: TeamMemberItem[] = [
   { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Laboratorium Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Staff Laboratorium Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
   { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
 ];
 
@@ -458,7 +458,6 @@ export default function RobotikLandingPage() {
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-7">
           <a href="#beranda" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Beranda</a>
-          <a href="#berita" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Berita</a>
           <a href="#tentang" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Tentang Kami</a>
           <a href="#tim" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Tim Kami</a>
           <a href="#layanan" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Layanan</a>
@@ -615,9 +614,6 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         <section id="berita" className="py-16 bg-slate-900 text-white overflow-hidden w-full relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-10 text-center reveal-element">
-            <span className="px-3.5 py-1.5 rounded-full bg-blue-600/30 border border-blue-500/40 text-blue-400 text-[11px] font-bold uppercase tracking-wider font-mono">
-              📰 Berita & Informasi Resmi
-            </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-3">
               Berita & Kegiatan Terbaru AIRO
             </h2>
