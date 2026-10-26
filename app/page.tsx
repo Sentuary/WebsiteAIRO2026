@@ -7,8 +7,6 @@ import AdminDashboard, { BeritaItem, TeamMemberItem } from "@/components/AdminDa
 import {
   subscribeToCollection,
   seedCollectionIfEmpty,
-  saveDocument,
-  verifyPinFromFirestore,
   loginAdminWithFirebase,
   logoutAdminFromFirebase,
   onAdminAuthStateChanged,
@@ -22,34 +20,34 @@ interface FormData {
   message: string;
 }
 
-// Initial Default Data with original Cloudinary photo assets
+// Initial Default Data (Digunakan sebagai fallback awal sebelum sinkron dengan Firestore)
 const INITIAL_PEMBIMBING: TeamMemberItem[] = [
-  { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716915/jmk-website/pembimbing/h4fiebyvmkikss8gxu0m.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716917/jmk-website/pembimbing/qkfs84ryd9pnalibb1fa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716917/jmk-website/pembimbing/mbtfsbzinixmdmybeynw.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716918/jmk-website/pembimbing/ze0gh6zvmsx7zytoquvb.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716919/jmk-website/pembimbing/iuxagqyvjhyvdqssuspo.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716920/jmk-website/pembimbing/jgbv2lbrdgfiee9bupso.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716921/jmk-website/pembimbing/j5m5hvvyc21m2nltlwxf.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716922/jmk-website/pembimbing/vay5nqxhln5js7e8io0j.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716923/jmk-website/pembimbing/vn1dbcfad3tow47uyez0.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Staff Laboratorium Komputer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716915/jmk-website/pembimbing/vndcxrfsavabs8xyyeaa.jpg', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Sistem Informasi', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
-  { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-1', label: 'Pembimbing 1', name: 'Ramadhani Ulansari, S.Kom., M.T', role: 'Dekan Fakultas Teknologi Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-2', label: 'Pembimbing 2', name: 'F.A. Ricky Bayu Styanto, S.Kom., M.Kom', role: 'Ketua Program Studi Sistem Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-3', label: 'Pembimbing 3', name: 'Soni Rudi Hartanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-4', label: 'Pembimbing 4', name: 'Suharyanto, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Sistem Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-5', label: 'Pembimbing 5', name: 'Hari Chandra Budi Rahardjo, S.Kom., M.A.B', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-6', label: 'Pembimbing 6', name: 'Jenih, S.Kom., M.Kom', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-7', label: 'Pembimbing 7', name: 'Atik Nalariza, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-8', label: 'Pembimbing 8', name: 'Desmiwati, S.Kom., M.Si', role: 'Dosen Program Studi Ilmu Komputer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-9', label: 'Pembimbing 9', name: 'Novi Suprapti, S.Kom', role: 'Staff Fakultas Teknologi Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-10', label: 'Pembimbing 10', name: 'Agus Riyanto, S.Kom., M.A.B', role: 'Staff Laboratorium Komputer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-11', label: 'Pembimbing 11', name: 'Yasmiati, S.Kom., M.Si', role: 'Ketua Program Studi Sistem Informasi', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
+  { id: 'pembimbing-12', label: 'Pembimbing 12', name: 'Suwarni, S.Kom., M.Si', role: 'Dosen Tetap Prodi Ilmu Komputer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia (URINDO)' },
 ];
 
 const INITIAL_PENGAJAR: TeamMemberItem[] = [
-  { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716924/jmk-website/pengajar/o2yuwo3sklssw1z2lami.jpg', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716924/jmk-website/pengajar/jdln0xn7zf1sje1ohrc6.jpg', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: 'https://res.cloudinary.com/f2tewygu/image/upload/v1784716925/jmk-website/pengajar/egvglmoqzhetnxmeymz2.jpg', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-4', label: 'Pengajar 4', name: 'Rifaldi Alfauzi', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-5', label: 'Pengajar 5', name: 'Dinda Alya Ainsani', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-6', label: 'Pengajar 6', name: 'Zhaki Ramdani', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-7', label: 'Pengajar 7', name: 'Rashif Aziiz', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-8', label: 'Pengajar 8', name: 'Azhar Khaibar', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-9', label: 'Pengajar 9', name: 'Keenan Pandu Albany', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-10', label: 'Pengajar 10', name: 'Sri Diah Lestari', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
-  { id: 'pengajar-11', label: 'Pengajar 11', name: 'Siti Adriyani Salsabil', role: 'Asisten Trainer', image: '/images/hero_robot.png', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-1', label: 'Pengajar 1', name: 'Reza Ramadhan', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-2', label: 'Pengajar 2', name: 'Naisya Putri', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-3', label: 'Pengajar 3', name: 'Rafli Maulana Zidane', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-4', label: 'Pengajar 4', name: 'Rifaldi Alfauzi', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-5', label: 'Pengajar 5', name: 'Dinda Alya Ainsani', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-6', label: 'Pengajar 6', name: 'Zhaki Ramdani', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-7', label: 'Pengajar 7', name: 'Rashif Aziiz', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-8', label: 'Pengajar 8', name: 'Azhar Khaibar', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-9', label: 'Pengajar 9', name: 'Keenan Pandu Albany', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-10', label: 'Pengajar 10', name: 'Sri Diah Lestari', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
+  { id: 'pengajar-11', label: 'Pengajar 11', name: 'Siti Adriyani Salsabil', role: 'Asisten Trainer', image: '/images/hero_robot.webp', institution: 'Universitas Respati Indonesia' },
 ];
 
 const INITIAL_BERITA: BeritaItem[] = [
@@ -60,7 +58,7 @@ const INITIAL_BERITA: BeritaItem[] = [
     date: '5 Agustus 2026',
     excerpt: 'AIRO Learning Center bekerjasama dengan FTI URINDO membuka pendaftaran program les robotik interaktif untuk tingkat SD, SMP, SMA & Mahasiswa.',
     content: 'Fakultas Teknologi Informasi Universitas Respati Indonesia (URINDO) bersama AIRO Robotics resmi membuka pendaftaran kelas robotika tingkat lanjut. Pembelajaran mencakup perakitan mekanis, sensor Arduino, hingga pemrograman logika AI.',
-    image: '/images/Poster-1.png'
+    image: '/images/Poster-1.webp'
   },
   {
     id: 'berita-2',
@@ -69,7 +67,7 @@ const INITIAL_BERITA: BeritaItem[] = [
     date: '1 Agustus 2026',
     excerpt: 'Para peserta antusias mempelajari cara membuat otomatisasi rumah pintar dan sensor jarak menggunakan modul AI Smart Life.',
     content: 'Workshop robotika pekan ini dihadiri puluhan peserta yang diajarkan langsung oleh tim trainer AIRO. Seluruh peserta mendapatkan kesempatan praktik langsung merakit hardware kinetik dan mengunggah kode program.',
-    image: '/images/AI-Smart-Life.png'
+    image: '/images/AI-Smart-Life.webp'
   },
   {
     id: 'berita-3',
@@ -78,7 +76,7 @@ const INITIAL_BERITA: BeritaItem[] = [
     date: '25 Juli 2026',
     excerpt: 'Inovasi kurikulum baru bertema hewan melatih kreativitas kinetik dan pemahaman rasio gir mekanis anak secara menyenangkan.',
     content: 'Modul AI-Fantasy-Zoo dirancang khusus untuk melatih kecerdasan spasial dan motorik anak melalui perakitan robot hewan interaktif.',
-    image: '/images/AI-Fantasy-Zoo.png'
+    image: '/images/AI-Fantasy-Zoo.webp'
   },
   {
     id: 'berita-4',
@@ -87,17 +85,10 @@ const INITIAL_BERITA: BeritaItem[] = [
     date: '18 Juli 2026',
     excerpt: 'Karya robotik berbasis kecerdasan buatan dari mahasiswa URINDO berhasil meraih peringkat terbaik dalam ajang kompetisi nasional.',
     content: 'Mahasiswa prodi Ilmu Komputer dan Sistem Informasi FTI URINDO kembali mengukir prestasi gemilang dengan menciptakan prototype lengan robot berbasis vision AI.',
-    image: '/images/gallery_level_3.jpg'
+    image: '/images/gallery_level_3.webp'
   }
 ];
 
-// Helper function to optimize Cloudinary image URLs for low-end mobile devices & auto-format
-function getOptimizedCloudinaryUrl(url: string, width: number = 800): string {
-  if (!url || typeof url !== 'string') return url;
-  if (!url.includes('res.cloudinary.com')) return url;
-  if (url.includes('/image/upload/f_auto') || url.includes('/image/upload/q_auto')) return url;
-  return url.replace('/image/upload/', `/image/upload/f_auto,q_auto,w_${width},c_limit/`);
-}
 
 export default function RobotikLandingPage() {
   // State untuk Mobile Menu Navigation
@@ -173,22 +164,27 @@ export default function RobotikLandingPage() {
   const [showAdminDashboard, setShowAdminDashboard] = useState<boolean>(false);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  // Admin Login & Session Expiration Constants
-  const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 Menit Idle Timeout
-  const MAX_SESSION_MS = 4 * 60 * 60 * 1000; // 4 Jam Maksimal Sesi
+  // Admin Login Session Expiration Constant: Tepat 1 Jam (3600 detik)
+  const ADMIN_SESSION_EXPIRY_MS = 60 * 60 * 1000; // 1 Jam Expired Token/Sesi
 
-  // Sync login session with Firebase Auth and initialize session timestamps
+  // Sync login session with Firebase Auth and enforce 1-hour expiration limit
   useEffect(() => {
     const unsubscribe = onAdminAuthStateChanged((user) => {
       if (user) {
-        setIsLoggedIn(true);
-        const now = Date.now().toString();
-        localStorage.setItem('airo_admin_logged_in', 'true');
-        if (!localStorage.getItem('airo_session_start')) {
-          localStorage.setItem('airo_session_start', now);
+        const now = Date.now();
+        const sessionStartStr = localStorage.getItem('airo_session_start');
+        const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : now;
+
+        // Jika sesi sudah lebih dari 1 jam sejak pertama kali login, wajib logout
+        if (now - sessionStart >= ADMIN_SESSION_EXPIRY_MS) {
+          handleLogout();
+          return;
         }
-        if (!localStorage.getItem('airo_last_activity')) {
-          localStorage.setItem('airo_last_activity', now);
+
+        setIsLoggedIn(true);
+        localStorage.setItem('airo_admin_logged_in', 'true');
+        if (!sessionStartStr) {
+          localStorage.setItem('airo_session_start', now.toString());
         }
       } else {
         setIsLoggedIn(false);
@@ -202,63 +198,32 @@ export default function RobotikLandingPage() {
   }, []);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
-  const [loginStep, setLoginStep] = useState<'pin' | 'credentials'>('pin');
-  const [pinInput, setPinInput] = useState<string>('');
   const [emailInput, setEmailInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
-  const [showPin, setShowPin] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [selectedBeritaModal, setSelectedBeritaModal] = useState<BeritaItem | null>(null);
 
-  // Monitor Admin Session Expiration (15-Min Idle & 4-Hour Max Duration)
+  // Monitor Admin Session Expiration (Strict 1-Hour Token Expiration)
   useEffect(() => {
     if (!isLoggedIn) return;
 
     const checkAdminSession = () => {
       const now = Date.now();
       const sessionStartStr = localStorage.getItem('airo_session_start');
-      const lastActivityStr = localStorage.getItem('airo_last_activity');
-
       const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : now;
-      const lastActivity = lastActivityStr ? parseInt(lastActivityStr, 10) : now;
 
-      // 1. Check Max Session Timeout (4 Hours)
-      if (now - sessionStart >= MAX_SESSION_MS) {
-        alert('⏰ Sesi login telah mencapai batas maksimal 4 jam. Anda telah otomatis logout demi keamanan.');
-        handleLogout();
-        return;
-      }
-
-      // 2. Check Idle Timeout (15 Minutes)
-      if (now - lastActivity >= IDLE_TIMEOUT_MS) {
-        alert('💤 Anda telah tidak aktif (idle) selama 15 menit. Sesi Admin otomatis berakhir.');
+      // Cek Batas Kadaluarsa Token Sesi 1 Jam
+      if (now - sessionStart >= ADMIN_SESSION_EXPIRY_MS) {
+        alert('Waktu sesi login Admin telah habis (berlaku 1 jam). Silakan login kembali.');
         handleLogout();
         return;
       }
     };
 
-    // Check session status every 5 seconds
-    const intervalId = setInterval(checkAdminSession, 5000);
-
-    // Reset idle timeout on user interaction (mousemove, keydown, click, scroll, touchstart)
-    const handleUserInteraction = () => {
-      const now = Date.now();
-      const lastAct = localStorage.getItem('airo_last_activity');
-      const lastTime = lastAct ? parseInt(lastAct, 10) : 0;
-      // Throttle localStorage updates to once every 2 seconds
-      if (now - lastTime > 2000) {
-        localStorage.setItem('airo_last_activity', now.toString());
-      }
-    };
-
-    const interactionEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-    interactionEvents.forEach((ev) => window.addEventListener(ev, handleUserInteraction, { passive: true }));
-
-    return () => {
-      clearInterval(intervalId);
-      interactionEvents.forEach((ev) => window.removeEventListener(ev, handleUserInteraction));
-    };
+    // Periksa status sesi setiap 3 detik
+    const intervalId = setInterval(checkAdminSession, 3000);
+    return () => clearInterval(intervalId);
   }, [isLoggedIn]);
 
   // Subscribe to Firebase Firestore Realtime Database
@@ -269,95 +234,20 @@ export default function RobotikLandingPage() {
     seedCollectionIfEmpty('pengajar', INITIAL_PENGAJAR);
     seedAdminUserIfNotExist();
 
-    // Listen to real-time updates from Firebase Firestore
+    // Listen to real-time updates directly from Firebase Firestore collections
     const unsubBerita = subscribeToCollection<BeritaItem>('berita', (data) => {
       if (data && data.length > 0) setBeritaList(data);
     });
+
     const unsubPembimbing = subscribeToCollection<TeamMemberItem>('pembimbing', (data) => {
       if (data && data.length > 0) {
-        // Robust merge: ensure all official 12 pembimbing are preserved with their photos
-        const mergedInitial = INITIAL_PEMBIMBING.map((initialItem) => {
-          const firestoreItem = data.find(
-            (d) =>
-              d.id === initialItem.id ||
-              (d.name && d.name.trim().toLowerCase() === initialItem.name.trim().toLowerCase()) ||
-              (d.label && d.label.trim().toLowerCase() === initialItem.label.trim().toLowerCase())
-          );
-          if (!firestoreItem) {
-            saveDocument('pembimbing', initialItem.id, initialItem);
-            return initialItem;
-          }
-          // Prioritize genuine Cloudinary image URL if Firestore has a placeholder or empty
-          const photo = (firestoreItem.image && firestoreItem.image.startsWith('http'))
-            ? firestoreItem.image
-            : (initialItem.image && initialItem.image.startsWith('http') ? initialItem.image : (firestoreItem.image || initialItem.image));
-
-          const merged: TeamMemberItem = {
-            ...initialItem,
-            ...firestoreItem,
-            id: initialItem.id,
-            image: photo || '/images/hero_robot.png',
-          };
-          if (firestoreItem.image !== merged.image) {
-            saveDocument('pembimbing', firestoreItem.id || initialItem.id, merged);
-          }
-          return merged;
-        });
-
-        // Retain any custom members added through Admin Dashboard
-        const customMembers = data.filter(
-          (d) =>
-            !INITIAL_PEMBIMBING.some(
-              (init) =>
-                init.id === d.id ||
-                (d.name && init.name.trim().toLowerCase() === d.name.trim().toLowerCase())
-            )
-        );
-
-        setPembimbingList([...mergedInitial, ...customMembers]);
+        setPembimbingList(data);
       }
     });
 
     const unsubPengajar = subscribeToCollection<TeamMemberItem>('pengajar', (data) => {
       if (data && data.length > 0) {
-        // Robust merge: ensure all official 11 pengajar are preserved with their photos
-        const mergedInitial = INITIAL_PENGAJAR.map((initialItem) => {
-          const firestoreItem = data.find(
-            (d) =>
-              d.id === initialItem.id ||
-              (d.name && d.name.trim().toLowerCase() === initialItem.name.trim().toLowerCase()) ||
-              (d.label && d.label.trim().toLowerCase() === initialItem.label.trim().toLowerCase())
-          );
-          if (!firestoreItem) {
-            saveDocument('pengajar', initialItem.id, initialItem);
-            return initialItem;
-          }
-          const photo = (firestoreItem.image && firestoreItem.image.startsWith('http'))
-            ? firestoreItem.image
-            : (initialItem.image && initialItem.image.startsWith('http') ? initialItem.image : (firestoreItem.image || initialItem.image));
-
-          const merged: TeamMemberItem = {
-            ...initialItem,
-            ...firestoreItem,
-            id: initialItem.id,
-            image: photo || '/images/hero_robot.png',
-          };
-          if (firestoreItem.image !== merged.image) {
-            saveDocument('pengajar', firestoreItem.id || initialItem.id, merged);
-          }
-          return merged;
-        });
-
-        const customMembers = data.filter(
-          (d) =>
-            !INITIAL_PENGAJAR.some(
-              (init) =>
-                init.id === d.id ||
-                (d.name && init.name.trim().toLowerCase() === d.name.trim().toLowerCase())
-            )
-        );
-
-        setPengajarList([...mergedInitial, ...customMembers]);
+        setPengajarList(data);
       }
     });
 
@@ -367,24 +257,6 @@ export default function RobotikLandingPage() {
       unsubPengajar();
     };
   }, []);
-
-  const handlePinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError(null);
-    setIsLoggingIn(true);
-    try {
-      const isValid = await verifyPinFromFirestore(pinInput);
-      if (isValid) {
-        setLoginStep('credentials');
-      } else {
-        setLoginError('PIN 6-digit salah! Silakan coba lagi.');
-      }
-    } catch (err: any) {
-      setLoginError('Gagal memverifikasi PIN dengan Firebase: ' + (err.message || 'Error'));
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -399,10 +271,8 @@ export default function RobotikLandingPage() {
       localStorage.setItem('airo_last_activity', now);
       setIsLoginModalOpen(false);
       setShowAdminDashboard(true);
-      setPinInput('');
       setEmailInput('');
       setPasswordInput('');
-      setLoginStep('pin');
     } catch (err: any) {
       setLoginError(err.message || 'Email atau Password Admin salah!');
     } finally {
@@ -529,161 +399,183 @@ export default function RobotikLandingPage() {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200">
       
-      {/* ========================================== */}
-      {/* HEADER & NAVBAR                            */}
-      {/* ========================================== */}
       <header 
-        className={`fixed top-0 left-0 right-0 h-20 border-b z-50 px-4 sm:px-8 flex items-center justify-between transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled 
-            ? 'bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-slate-200 dark:border-slate-800 shadow-sm' 
-            : 'bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-slate-200/80 dark:border-slate-800/80'
+            ? 'h-16 sm:h-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs' 
+            : 'h-16 sm:h-20 bg-white/70 dark:bg-slate-950/70 backdrop-blur-sm border-b border-transparent'
         }`}
       >
-        {/* Logo Branding Icon Dashboard Link - Triggers Admin Login Portal */}
-        <button 
-          onClick={() => {
-            if (isLoggedIn) {
-              setShowAdminDashboard(true);
-            } else {
-              setLoginStep('pin');
-              setLoginError(null);
-              setIsLoginModalOpen(true);
-            }
-          }}
-          className="flex items-center group border-none outline-none ring-0 cursor-pointer bg-transparent p-0"
-          title={isLoggedIn ? "Buka Dashboard Admin AIRO" : "Login Portal Admin AIRO"}
-        >
-          <img 
-            src="/images/logo-airo.png" 
-            alt="AIRO Logo" 
-            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300 border-none outline-none ring-0 shadow-none"
-          />
-        </button>
-
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7">
-          <a href="#beranda" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Beranda</a>
-          <a href="#berita" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Berita</a>
-          <a href="#tentang" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Tentang Kami</a>
-          <a href="#tim" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Tim Kami</a>
-          <a href="#layanan" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Layanan</a>
-          <a href="#poster" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Poster Pembelajaran</a>
-          <a href="#galeri" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Galeri</a>
-          <a href="#kontak" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Kontak</a>
-        </nav>
-
-        {/* Action Right CTA Context Button Component Header */}
-        <div className="hidden md:flex items-center gap-3">
-          {/* Theme Toggle Button (Dark / Light Mode) */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-            title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
-            className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 flex items-center justify-center transition-colors"
-          >
-            {theme === 'dark' ? (
-              <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-              </svg>
-            )}
-          </button>
-
-          {isLoggedIn && (
-            <button
-              onClick={() => setShowAdminDashboard(true)}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-all shadow-sm flex items-center gap-1.5"
-            >
-              <span>Dashboard Admin</span>
-            </button>
-          )}
-
-          <a href="#kontak" className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-all shadow-sm">
-            Hubungi Kami
-          </a>
-        </div>
-
-        {/* Toggle Mobile Menu Controller Layout Trigger Button */}
-        <div className="md:hidden flex items-center gap-2">
-          {/* Mobile Theme Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-8 flex items-center justify-between">
           <button 
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
-            aria-label="Open menu"
+            onClick={() => {
+              if (isLoggedIn) {
+                setShowAdminDashboard(true);
+              } else {
+                setLoginError(null);
+                setIsLoginModalOpen(true);
+              }
+            }}
+            className="flex items-center group cursor-pointer p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            title={isLoggedIn ? "Buka Dashboard Admin AIRO" : "Portal Admin AIRO"}
+            aria-label={isLoggedIn ? "Buka Dashboard Admin AIRO" : "Portal Admin AIRO"}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
+            <img 
+              src="/images/logo-airo.webp" 
+              alt="AIRO Robotics Logo" 
+              className="h-9 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            />
           </button>
+
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+            <a href="#beranda" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Beranda</a>
+            <a href="#berita" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Berita</a>
+            <a href="#tentang" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Tentang Kami</a>
+            <a href="#tim" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Tim Kami</a>
+            <a href="#layanan" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Layanan</a>
+            <a href="#poster" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Poster</a>
+            <a href="#galeri" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Galeri</a>
+            <a href="#kontak" className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Kontak</a>
+          </nav>
+
+          <div className="hidden lg:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+              title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+              className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-slate-300 dark:hover:border-slate-700 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {theme === 'dark' ? (
+                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                </svg>
+              )}
+            </button>
+
+            {isLoggedIn && (
+              <button
+                onClick={() => setShowAdminDashboard(true)}
+                className="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-medium text-xs tracking-wide transition-colors flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+                <span>Dashboard Admin</span>
+              </button>
+            )}
+
+            <a 
+              href="#kontak" 
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs tracking-wide transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              Hubungi Kami
+            </a>
+          </div>
+
+          <div className="lg:hidden flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+              className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {theme === 'dark' ? (
+                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                </svg>
+              )}
+            </button>
+
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" 
+              aria-label="Buka menu navigasi"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile Navigation Sidebar Drawer Component Drawer Overlay Layout */}
-      <div className={`fixed inset-y-0 right-0 z-50 w-72 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-6 transform transition-transform duration-300 ease-in-out md:hidden ${
+      <div className={`fixed inset-y-0 right-0 z-50 w-72 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-6 transform transition-transform duration-300 ease-in-out lg:hidden ${
         isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Navigasi Menu</span>
-          <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Navigasi AIRO</span>
+          <div className="flex items-center gap-1.5">
             <button
               onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs"
+              aria-label={theme === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? (
+                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                </svg>
+              )}
             </button>
             <button 
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+              aria-label="Tutup menu navigasi"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
-        <nav className="flex flex-col gap-4">
-          <a href="#beranda" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Beranda</a>
-          <a href="#berita" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Berita</a>
-          <a href="#tentang" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Tentang Kami</a>
-          <a href="#tim" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Tim Kami</a>
-          <a href="#layanan" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Layanan</a>
-          <a href="#poster" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Poster Pembelajaran</a>
-          <a href="#galeri" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Galeri</a>
-          <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors">Kontak</a>
+        <nav className="flex flex-col gap-1">
+          <a href="#beranda" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Beranda</a>
+          <a href="#berita" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Berita</a>
+          <a href="#tentang" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Tentang Kami</a>
+          <a href="#tim" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Tim Kami</a>
+          <a href="#layanan" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Layanan</a>
+          <a href="#poster" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Poster</a>
+          <a href="#galeri" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Galeri</a>
+          <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Kontak</a>
         </nav>
-        <div className="mt-auto pt-6 border-t border-slate-100 space-y-3">
+        <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
           {isLoggedIn && (
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 setShowAdminDashboard(true);
               }}
-              className="flex items-center justify-center w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-md"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-xs border border-slate-200 dark:border-slate-700 transition-colors"
             >
-              🛡️ Dashboard Admin
+              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              <span>Dashboard Admin</span>
             </button>
           )}
-          <a href="#kontak" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors shadow-md">
-            Daftar Kelas Sekarang
+          <a 
+            href="#kontak" 
+            onClick={() => setIsMobileMenuOpen(false)} 
+            className="flex items-center justify-center w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs tracking-wide transition-colors shadow-xs"
+          >
+            Hubungi Kami
           </a>
         </div>
       </div>
 
-      {/* Backdrop Background Mask Component Shadow Box for Drawer closing triggers */}
       {isMobileMenuOpen && (
         <div 
           onClick={() => setIsMobileMenuOpen(false)}
@@ -691,22 +583,17 @@ export default function RobotikLandingPage() {
         />
       )}
 
-      {/* ========================================== */}
-      {/* HERO SECTION                */}
-      {/* ========================================== */}
       <main className="flex-1">
         <section id="beranda" className="pt-28 pb-16 px-4 sm:px-8 max-w-7xl mx-auto w-full flex flex-col justify-center">
-          <div className="bg-gradient-to-tr from-sky-400 via-blue-500 to-indigo-600 rounded-3xl p-8 sm:p-12 lg:p-16 text-white shadow-xl shadow-blue-500/10 flex flex-col lg:flex-row items-center gap-12 relative overflow-hidden reveal-element">
+          <div className="bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-700 rounded-3xl p-8 sm:p-12 lg:p-16 text-white shadow-xl shadow-blue-500/10 flex flex-col lg:flex-row items-center gap-12 relative overflow-hidden reveal-element">
             
-            {/* Decorative Cyber Space Graphic Vectors Background Nodes */}
-            <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/5 border border-white/10 pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-96 h-96 rounded-full bg-white/5 border border-white/10 pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.15),rgba(255,255,255,0))] pointer-events-none" />
+            <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
-            {/* Left Content Context Information Header Module Block */}
             <div className="flex-1 flex flex-col items-start text-left relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold tracking-wider uppercase mb-6 backdrop-blur-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Pembelajaran Terbuka {new Date().getFullYear()}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/20 text-xs font-semibold tracking-wide text-white mb-6 backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-200" />
+                Pendaftaran Terbuka {new Date().getFullYear()}
               </div>
               
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
@@ -714,28 +601,25 @@ export default function RobotikLandingPage() {
               </h1>
               
               <p className="text-white/90 text-sm sm:text-base mt-6 leading-relaxed max-w-xl">
-                Belajar Robotik dari nol dengan mentor berpengalaman, kurikulum terstruktur, dan pembelajaran interaktif langsung menggunakan kit fisik yang modern.
+                Belajar robotik dari dasar bersama instruktur berpengalaman, kurikulum terstruktur, dan praktik langsung menggunakan kit fisik interaktif.
               </p>
               
-              {/* Hero Call to Action Navigation Matrix UI Layout Element Row Block */}
-              <div className="mt-8 flex flex-wrap gap-4 w-full sm:w-auto">
-                <a href="#layanan" className="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-blue-600 font-bold text-sm tracking-wide text-center transition-all shadow-md hover:shadow-lg active:scale-95">
-                  Lihat Program
+              <div className="mt-8 flex flex-wrap gap-3.5 w-full sm:w-auto">
+                <a 
+                  href="#kontak" 
+                  className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-blue-700 font-semibold text-sm tracking-wide text-center transition-all shadow-md hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  Daftar Kelas Sekarang
                 </a>
-                <a href="#kontak" className="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide text-center transition-all shadow-md active:scale-95">
-                  Daftar Kelas
+                <a 
+                  href="#layanan" 
+                  className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-blue-700/60 hover:bg-blue-700/80 border border-white/20 text-white font-semibold text-sm tracking-wide text-center transition-all backdrop-blur-sm active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  Lihat Pilihan Program
                 </a>
               </div>
-              
-              <a href="#kontak" className="group mt-6 text-white/80 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
-                Hubungi Kami 
-                <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </a>
             </div>
             
-            {/* Right Graphic Media Container Showcase Component Grid Display */}
             <div className="flex-1 w-full flex justify-center items-center relative z-10 reveal-element reveal-delay-2">
               <div className="flex-1 flex justify-center items-center relative">
                 <div 
@@ -743,8 +627,8 @@ export default function RobotikLandingPage() {
                   style={{ animation: 'floatSlow 4s ease-in-out infinite' }}
                 >
                   <img 
-                    src="/images/hero_robot.png" 
-                    alt="Hero Robot AIRO" 
+                    src="/images/hero_robot.webp" 
+                    alt="Robot Edukasi AIRO" 
                     decoding="async"
                     className="w-full h-full object-contain filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] transform hover:scale-105 transition-transform duration-500"
                   />
@@ -789,9 +673,13 @@ export default function RobotikLandingPage() {
                     <div>
                       <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60">
                         <img
-                          src={item.image}
+                          src={item.image || '/images/hero_robot.webp'}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/images/hero_robot.webp';
+                          }}
                         />
                         <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded font-mono shadow-sm">
                           {item.category}
@@ -832,9 +720,13 @@ export default function RobotikLandingPage() {
                     <div>
                       <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60">
                         <img
-                          src={item.image}
+                          src={item.image || '/images/hero_robot.webp'}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/images/hero_robot.webp';
+                          }}
                         />
                         <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded font-mono shadow-sm">
                           {item.category}
@@ -1029,6 +921,11 @@ export default function RobotikLandingPage() {
                             <span className={`text-[11px] leading-tight ${selectedPembimbingIndex === idx ? 'text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
                               {item.role}
                             </span>
+                            {item.institution && (
+                              <span className={`text-[10px] leading-tight truncate mt-0.5 ${selectedPembimbingIndex === idx ? 'text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
+                                {item.institution}
+                              </span>
+                            )}
                           </button>
                         ))
                       : pengajarList.map((item, idx) => (
@@ -1046,6 +943,11 @@ export default function RobotikLandingPage() {
                             <span className={`text-[11px] leading-tight ${selectedPengajarIndex === idx ? 'text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
                               {item.role}
                             </span>
+                            {item.institution && (
+                              <span className={`text-[10px] leading-tight truncate mt-0.5 ${selectedPengajarIndex === idx ? 'text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
+                                {item.institution}
+                              </span>
+                            )}
                           </button>
                         ))}
                   </div>
@@ -1053,7 +955,7 @@ export default function RobotikLandingPage() {
               </div>
 
               {/* Right Panel: Large Featured Card View */}
-              <div className="flex-1 p-3 sm:p-5 bg-white dark:bg-slate-900 flex flex-col justify-center items-center h-full min-h-[380px] sm:min-h-[480px]">
+              <div className="flex-1 p-4 sm:p-6 bg-white dark:bg-slate-900 flex flex-col justify-center items-center h-full min-h-[380px] sm:min-h-[480px]">
                 {(() => {
                   const currentMember = teamTab === 'pembimbing' 
                     ? (pembimbingList[selectedPembimbingIndex] || pembimbingList[0]) 
@@ -1063,24 +965,45 @@ export default function RobotikLandingPage() {
 
                   return (
                     <div key={currentMember.id} className="w-full h-full flex flex-col items-center justify-center animate-team-fade">
-                      {/* Photo Showcase Box - Expands to Fill Right Panel */}
-                      <div className="relative w-full h-[360px] sm:h-[440px] md:h-[480px] rounded-[32px] overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-md bg-slate-50 dark:bg-slate-950 flex items-center justify-center group">
+                      {/* Photo Showcase Box with SVG/Image and Overlay Profile Info */}
+                      <div className="relative w-full h-[360px] sm:h-[420px] md:h-[460px] rounded-[28px] overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-md bg-slate-50 dark:bg-slate-950 flex items-center justify-center group">
                         <img 
                           key={currentMember.id}
-                          src={getOptimizedCloudinaryUrl(currentMember.image || '/images/hero_robot.png', 600)} 
+                          src={currentMember.image || '/images/hero_robot.webp'} 
                           alt={currentMember.name} 
                           loading="lazy"
                           decoding="async"
-                          className="w-full h-full object-contain object-center p-2 transition-transform duration-500"
+                          className="w-full h-full object-contain object-center p-4 transition-transform duration-500 group-hover:scale-105"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
-                            e.currentTarget.src = getOptimizedCloudinaryUrl('/images/hero_robot.png', 600);
+                            e.currentTarget.src = '/images/hero_robot.webp';
                           }}
                         />
-                        {/* Bottom Right Floating Badge */}
-                        <span className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 px-5 py-2.5 rounded-2xl bg-slate-800/90 dark:bg-slate-950/90 text-white font-mono font-extrabold text-xs uppercase tracking-widest shadow-xl backdrop-blur-md border border-slate-700/50 dark:border-slate-800">
-                          {currentMember.label}
+
+                        {/* Top Right Floating Badge */}
+                        <span className="absolute top-4 right-4 sm:top-5 sm:right-5 px-3.5 py-1.5 rounded-full bg-slate-900/80 dark:bg-slate-800/80 text-white font-mono font-bold text-[11px] uppercase tracking-wider backdrop-blur-md border border-white/10 shadow-sm">
+                          {currentMember.label || (teamTab === 'pembimbing' ? 'Pembimbing' : 'Pengajar')}
                         </span>
+
+                        {/* Bottom Profile Details Gradient Banner */}
+                        <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-slate-950/90 via-slate-950/70 to-transparent backdrop-blur-[2px] text-white flex flex-col gap-1 transition-all">
+                          <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-white leading-snug drop-shadow-sm">
+                            {currentMember.name}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-200">
+                            <span className="font-semibold text-blue-300">
+                              {currentMember.role}
+                            </span>
+                            {currentMember.institution && (
+                              <>
+                                <span className="text-slate-400">•</span>
+                                <span className="text-slate-300 font-medium">
+                                  {currentMember.institution}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1156,7 +1079,7 @@ export default function RobotikLandingPage() {
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-blue-500/20 hover:-translate-y-1.5 transition-all duration-300 flex flex-col overflow-hidden group reveal-element reveal-delay-1">
                 <div className="h-64 sm:h-72 bg-slate-100 dark:bg-slate-950 relative overflow-hidden border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
                   <img 
-                    src="/images/AI-Fantasy-Zoo.png" 
+                    src="/images/AI-Fantasy-Zoo.webp" 
                     alt="Tema Animal - AI Fantasy Zoo" 
                     loading="lazy"
                     decoding="async"
@@ -1223,7 +1146,7 @@ export default function RobotikLandingPage() {
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-indigo-500/20 hover:-translate-y-1.5 transition-all duration-300 flex flex-col overflow-hidden group reveal-element reveal-delay-2">
                 <div className="h-64 sm:h-72 bg-slate-100 dark:bg-slate-950 relative overflow-hidden border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
                   <img 
-                    src="/images/AI-Smart-Life.png" 
+                    src="/images/AI-Smart-Life.webp" 
                     alt="Tema Smart Life - AI Smart Life" 
                     loading="lazy"
                     decoding="async"
@@ -1290,7 +1213,7 @@ export default function RobotikLandingPage() {
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-rose-500/20 hover:-translate-y-1.5 transition-all duration-300 flex flex-col overflow-hidden group reveal-element reveal-delay-3">
                 <div className="h-64 sm:h-72 bg-slate-100 dark:bg-slate-950 relative overflow-hidden border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
                   <img 
-                    src="/images/Ukit-Advance.png" 
+                    src="/images/Ukit-Advance.webp" 
                     alt="Advance Smart Life - Ukit Advance" 
                     loading="lazy"
                     decoding="async"
@@ -1408,7 +1331,7 @@ export default function RobotikLandingPage() {
             {(activePosterTab === 'all' || activePosterTab === 'poster1') && (
               <div 
                 className="reveal-element reveal-delay-1"
-                onClick={() => setSelectedPosterModal('/images/Poster-1.png')}
+                onClick={() => setSelectedPosterModal('/images/Poster-1.webp')}
               >
                 <div 
                   className="group relative cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
@@ -1420,7 +1343,7 @@ export default function RobotikLandingPage() {
                   <div className="bg-slate-200/90 dark:bg-slate-800/90 p-4 sm:p-5 rounded-3xl border border-slate-300 dark:border-slate-700 shadow-2xl backdrop-blur-sm max-w-sm sm:max-w-md -rotate-6 group-hover:rotate-0 transition-transform duration-500">
                     <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
                       <img 
-                        src="/images/Poster-1.png" 
+                        src="/images/Poster-1.webp" 
                         alt="Poster 1 - AIRO Robotics" 
                         loading="lazy"
                         decoding="async"
@@ -1450,7 +1373,7 @@ export default function RobotikLandingPage() {
             {(activePosterTab === 'all' || activePosterTab === 'poster2') && (
               <div 
                 className="reveal-element reveal-delay-2"
-                onClick={() => setSelectedPosterModal('/images/Poster-2.png')}
+                onClick={() => setSelectedPosterModal('/images/Poster-2.webp')}
               >
                 <div 
                   className="group relative cursor-pointer transform hover:scale-105 transition-all duration-500 ease-out"
@@ -1462,7 +1385,7 @@ export default function RobotikLandingPage() {
                   <div className="bg-slate-200/90 dark:bg-slate-800/90 p-4 sm:p-5 rounded-3xl border border-slate-300 dark:border-slate-700 shadow-2xl backdrop-blur-sm max-w-sm sm:max-w-md rotate-3 group-hover:rotate-0 transition-transform duration-500">
                     <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
                       <img 
-                        src="/images/Poster-2.png" 
+                        src="/images/Poster-2.webp" 
                         alt="Poster 2 - AIRO Robotics" 
                         loading="lazy"
                         decoding="async"
@@ -1510,7 +1433,7 @@ export default function RobotikLandingPage() {
                 </svg>
               </button>
               <img 
-                src={getOptimizedCloudinaryUrl(selectedPosterModal, 1200)} 
+                src={selectedPosterModal} 
                 alt="Poster Full Preview" 
                 loading="lazy"
                 decoding="async"
@@ -1548,7 +1471,7 @@ export default function RobotikLandingPage() {
               {/* Photo Card Block Module 1 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow group reveal-element reveal-delay-1">
                 <div className="h-64 overflow-hidden relative">
-                  <img src="/images/gallery_level_1.png" alt="Lego Mechanical Kit" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  <img src="/images/gallery_level_1.webp" alt="Lego Mechanical Kit" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
                   <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 1</span>
                 </div>
                 <div className="p-5 flex items-center gap-3">
@@ -1560,7 +1483,7 @@ export default function RobotikLandingPage() {
               {/* Photo Card Block Module 2 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow group reveal-element reveal-delay-2">
                 <div className="h-64 overflow-hidden relative">
-                  <img src="/images/gallery_level_2.png" alt="Arduino sensor setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  <img src="/images/gallery_level_2.webp" alt="Arduino sensor setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
                   <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 2</span>
                 </div>
                 <div className="p-5 flex items-center gap-3">
@@ -1572,7 +1495,7 @@ export default function RobotikLandingPage() {
               {/* Photo Card Block Module 3 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow group reveal-element reveal-delay-3">
                 <div className="h-64 overflow-hidden relative">
-                  <img src="/images/gallery_level_3.jpg" alt="Robotic Arm Setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  <img src="/images/gallery_level_3.webp" alt="Robotic Arm Setup" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
                   <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 3</span>
                 </div>
                 <div className="p-5 flex items-center gap-3">
@@ -1817,7 +1740,15 @@ export default function RobotikLandingPage() {
             </div>
 
             <div className="h-56 sm:h-72 relative rounded-lg overflow-hidden mb-4 shrink-0 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
-              <img src={selectedBeritaModal.image} alt={selectedBeritaModal.title} className="w-full h-full object-cover" />
+              <img 
+                src={selectedBeritaModal.image || '/images/hero_robot.webp'} 
+                alt={selectedBeritaModal.title} 
+                className="w-full h-full object-cover" 
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/images/hero_robot.webp';
+                }}
+              />
               <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded font-mono shadow-sm">
                 {selectedBeritaModal.category}
               </span>
@@ -1846,7 +1777,7 @@ export default function RobotikLandingPage() {
                   Portal Autentikasi Admin
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {loginStep === 'pin' ? 'Tahap 1: Verifikasi PIN' : 'Tahap 2: Kredensial Akun'}
+                  Masuk menggunakan akun Firebase Authentication
                 </p>
               </div>
               <button
@@ -1857,113 +1788,58 @@ export default function RobotikLandingPage() {
               </button>
             </div>
 
-            {loginStep === 'pin' ? (
-              <form onSubmit={handlePinSubmit} className="p-5 space-y-4">
-                <div className="space-y-1.5 text-center">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
-                    Masukkan PIN Keamanan
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPin ? "text" : "password"}
-                      maxLength={8}
-                      required
-                      autoFocus
-                      value={pinInput}
-                      onChange={(e) => setPinInput(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full text-center tracking-[0.3em] font-mono text-base py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPin(!showPin)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
-                      title={showPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
-                    >
-                      {showPin ? <FaEyeSlash className="w-3.5 h-3.5" /> : <FaEye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
+            <form onSubmit={handleCredentialsSubmit} className="p-5 space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email Admin</label>
+                <input
+                  type="email"
+                  required
+                  autoFocus
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="admin@airo.urindo.ac.id"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-3 pr-9 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-blue-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                    title={showPassword ? "Sembunyikan" : "Tampilkan"}
+                  >
+                    {showPassword ? <FaEyeSlash className="w-3.5 h-3.5" /> : <FaEye className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
+              </div>
 
-                {loginError && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 text-center bg-rose-50 dark:bg-rose-950/40 p-2 rounded border border-rose-200 dark:border-rose-900">
-                    {loginError}
-                  </p>
-                )}
+              {loginError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400 text-center bg-rose-50 dark:bg-rose-950/40 p-2 rounded border border-rose-200 dark:border-rose-900">
+                  {loginError}
+                </p>
+              )}
 
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isLoggingIn}
-                  className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors disabled:opacity-50"
+                  className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors disabled:opacity-50 shadow-sm shadow-blue-500/20"
                 >
-                  {isLoggingIn ? 'Memverifikasi...' : 'Lanjutkan ke Kredensial →'}
+                  {isLoggingIn ? 'Memverifikasi...' : 'Masuk Dashboard'}
                 </button>
-              </form>
-            ) : (
-              <form onSubmit={handleCredentialsSubmit} className="p-5 space-y-3.5">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email Admin</label>
-                  <input
-                    type="email"
-                    required
-                    autoFocus
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="airo@gmail.com"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-blue-600"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full pl-3 pr-9 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-blue-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
-                      title={showPassword ? "Sembunyikan" : "Tampilkan"}
-                    >
-                      {showPassword ? <FaEyeSlash className="w-3.5 h-3.5" /> : <FaEye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {loginError && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 text-center bg-rose-50 dark:bg-rose-950/40 p-2 rounded border border-rose-200 dark:border-rose-900">
-                    {loginError}
-                  </p>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    disabled={isLoggingIn}
-                    onClick={() => {
-                      setLoginStep('pin');
-                      setLoginError(null);
-                    }}
-                    className="w-1/3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors disabled:opacity-50"
-                  >
-                    Kembali
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLoggingIn}
-                    className="w-2/3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors disabled:opacity-50"
-                  >
-                    {isLoggingIn ? 'Memproses...' : 'Masuk Dashboard'}
-                  </button>
-                </div>
-              </form>
-            )}
+              </div>
+            </form>
           </div>
         </div>
       )}

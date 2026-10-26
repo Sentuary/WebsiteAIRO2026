@@ -2,22 +2,24 @@
 
 Website resmi **AIRO (Artificial Intelligence Robotics)** — Platform edukasi dan pengajaran robotika modern bagi anak-anak dan mahasiswa, yang bekerja sama dengan **Fakultas Teknologi Informasi Universitas Respati Indonesia (URINDO)**.
 
-Dibangun menggunakan **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **TypeScript**, serta terintegrasi dengan **Cloudinary CDN** untuk penyimpanan dan pengiriman media berkinerja tinggi.
+Dibangun menggunakan **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **TypeScript**, serta terintegrasi dengan **Firebase Firestore Realtime Database** dan **Sharp Image-to-SVG Vectorizer**.
 
 ---
 
 ## 🚀 Fitur Utama & Keunggulan
 
+- **🔥 Firebase Firestore Realtime Database**:
+  - Seluruh data dinamis (**Berita & Kegiatan**, **Dosen Pembimbing**, dan **Pengajar / Trainer**) tersimpan langsung di koleksi Firebase Firestore (`berita`, `pembimbing`, `pengajar`).
+  - Sinkronisasi instan dua arah secara *real-time* tanpa perlu me-refresh halaman.
+
+- **🎨 Image-to-SVG Architecture (Tanpa Storage Eksternal)**:
+  - Setiap gambar yang diunggah otomatis di-switch dan di-vektorisasi menjadi dokumen SVG murni (`data:image/svg+xml;base64,...`) yang super ringkas (~20–40 KB) via Sharp.
+  - Gambar tersimpan langsung di dalam dokumen atribut Firestore tanpa memerlukan bucket Cloudinary maupun Firebase Storage.
+
 - **⚡ Optimasi Performa HP Kentang (Low-End Mobile Optimization)**:
-  - **Dynamic Cloudinary URL Optimization**: Transformasi gambar otomatis (`f_auto,q_auto,w_*`) untuk format WebP/AVIF dan kompresi ukuran sesuai ukuran layar, menghemat hingga 80% bandwidth media.
-  - **Preconnect CDN**: Menyuntikkan tag `preconnect` ke domain Cloudinary untuk mempercepat handshake TLS & DNS.
   - **Mobile CSS GPU Relief**: Mematikan efek `backdrop-blur` (glassmorphism) dan animasi repaints berlebih pada layar HP (`max-width: 768px`) sehingga scrolling di HP kentang tetap 60 FPS tanpa patah-patah.
   - **Smart Rotation Timer**: Rotasi otomatis daftar tim menggunakan `document.hidden` check untuk otomatis jeda (*pause*) ketika tab tidak aktif / di luar layar, menghemat CPU & baterai HP.
   - **Lazy Loading & Async Decoding**: Mengunduh gambar non-hero secara bertahap saat discroll mendekati layar.
-
-- **☁️ Cloudinary Media Integration**:
-  - Seluruh gambar (Hero Robot, Poster Pembelajaran, Paket Kelas, Foto Dosen Pembimbing & Pengajar) tersimpan secara terpusat di **Cloudinary CDN** untuk pemuatan gambar yang cepat dan terdistribusi global.
-  - Dilengkapi SDK & REST API Uploader di `lib/cloudinary.ts` dan `app/api/upload/route.ts`.
 
 - **👥 Interactive Team Showcase (Pembimbing & Pengajar)**:
   - **12 Dosen Pembimbing** Fakultas Teknologi Informasi URINDO.
@@ -40,16 +42,17 @@ Dibangun menggunakan **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v
 
 ---
 
-## 🔑 Konfigurasi Environment Variables (`.env.local`)
+## 🔑 Konfigurasi Environment Variables (`.env`)
 
-Buat berkas `.env.local` di root proyek untuk mengonfigurasi Cloudinary credentials:
+Buat atau isi berkas `.env` di root proyek untuk mengonfigurasi Firebase credentials:
 
 ```env
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-CLOUDINARY_URL=cloudinary://your_api_key:your_api_secret@your_cloud_name
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
 ---
@@ -91,15 +94,17 @@ npm run start
 ```text
 ├── app/                      # Next.js App Router
 │   ├── api/
-│   │   └── upload/route.ts   # API Route Handler Upload Cloudinary
+│   │   └── upload/route.ts   # Image to SVG Switcher & Processing Endpoint
 │   ├── favicon.ico           # Favicon Website
 │   ├── globals.css           # Global Styling, Mobile GPU Tweaks & Animations
-│   ├── layout.tsx            # Root Layout Application (Preconnect Cloudinary)
+│   ├── layout.tsx            # Root Layout Application
 │   └── page.tsx              # Main Single Page Application (SPA)
+├── components/
+│   └── AdminDashboard.tsx    # Flat Anti-Slop CRUD Admin Dashboard (1-Hr Token Expiry)
 ├── lib/
-│   └── cloudinary.ts         # Integrasi Cloudinary SDK & REST API Uploader
+│   └── firebase.ts           # Firebase Auth & Firestore Client SDK
 ├── public/                   # Asset Statis Lokal
-├── .env.local                # Environment Variables (Cloudinary Keys)
+├── .env                      # Environment Variables (Firebase Keys)
 ├── package.json              # Metadata Proyek & Dependensi
 ├── tsconfig.json             # Konfigurasi TypeScript
 └── README.md                 # Dokumentasi Resmi Proyek

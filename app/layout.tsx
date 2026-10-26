@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/images/logo-airo.png",
+        url: "/images/logo-airo.webp",
         width: 800,
         height: 300,
         alt: "AIRO - Artificial Intelligence Robotics Learning Center FTI URINDO",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "AIRO - Artificial Intelligence Robotics & Jasa Mengajar Robotika",
     description: "Platform edukasi, les & jasa mengajar robotika modern bagi anak-anak dan mahasiswa, bekerja sama dengan FTI URINDO.",
-    images: ["/images/logo-airo.png"],
+    images: ["/images/logo-airo.webp"],
     creator: "@airo_robotics",
   },
   alternates: {
@@ -103,7 +103,7 @@ export default function RootLayout({
     "name": "AIRO - Artificial Intelligence Robotics",
     "alternateName": ["AIRO Robotics", "Jasa Mengajar Robotika", "AIRO Learning Center FTI URINDO"],
     "url": "https://airo.urindo.ac.id",
-    "logo": "https://airo.urindo.ac.id/images/logo-airo.png",
+    "logo": "https://airo.urindo.ac.id/images/logo-airo.webp",
     "description": "Platform edukasi dan jasa mengajar robotika modern bagi anak-anak dan mahasiswa, bekerjasama dengan Fakultas Teknologi Informasi Universitas Respati Indonesia (URINDO).",
     "address": {
       "@type": "PostalAddress",
@@ -162,8 +162,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <link rel="preconnect" href="https://res.cloudinary.com" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
