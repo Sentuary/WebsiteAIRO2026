@@ -3,7 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { FaInstagram, FaEye, FaEyeSlash } from "react-icons/fa6";
 import { SiGoogleforms } from "react-icons/si";
-import AdminDashboard, { BeritaItem, TeamMemberItem } from "@/components/AdminDashboard";
+import dynamic from 'next/dynamic';
+import type { BeritaItem, TeamMemberItem } from "@/components/AdminDashboard";
+
+const AdminDashboard = dynamic(() => import("@/components/AdminDashboard"), {
+  ssr: false,
+});
+import MobileCarousel from "@/components/MobileCarousel";
 import {
   subscribeToCollection,
   seedCollectionIfEmpty,
@@ -228,11 +234,14 @@ export default function RobotikLandingPage() {
 
   // Subscribe to Firebase Firestore Realtime Database
   useEffect(() => {
-    // Seed initial default data & Admin user profile if collections are empty
-    seedCollectionIfEmpty('berita', INITIAL_BERITA);
-    seedCollectionIfEmpty('pembimbing', INITIAL_PEMBIMBING);
-    seedCollectionIfEmpty('pengajar', INITIAL_PENGAJAR);
-    seedAdminUserIfNotExist();
+    // Only seed initial default data & Admin user profile when Admin is logged in
+    // This prevents IndexedDB blocking and CPU contention on initial page load for regular visitors
+    if (isLoggedIn) {
+      seedCollectionIfEmpty('berita', INITIAL_BERITA);
+      seedCollectionIfEmpty('pembimbing', INITIAL_PEMBIMBING);
+      seedCollectionIfEmpty('pengajar', INITIAL_PENGAJAR);
+      seedAdminUserIfNotExist();
+    }
 
     // Listen to real-time updates directly from Firebase Firestore collections
     const unsubBerita = subscribeToCollection<BeritaItem>('berita', (data) => {
@@ -256,7 +265,7 @@ export default function RobotikLandingPage() {
       unsubPembimbing();
       unsubPengajar();
     };
-  }, []);
+  }, [isLoggedIn]);
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -423,6 +432,10 @@ export default function RobotikLandingPage() {
             <img 
               src="/images/logo-airo.webp" 
               alt="AIRO Robotics Logo" 
+              width={180}
+              height={44}
+              fetchPriority="high"
+              decoding="async"
               className="h-9 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
             />
           </button>
@@ -620,7 +633,7 @@ export default function RobotikLandingPage() {
               </div>
             </div>
             
-            <div className="flex-1 w-full flex justify-center items-center relative z-10 reveal-element reveal-delay-2">
+            <div className="hidden md:flex flex-1 w-full justify-center items-center relative z-10 reveal-element reveal-delay-2">
               <div className="flex-1 flex justify-center items-center relative">
                 <div 
                   className="relative w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96"
@@ -642,8 +655,8 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         {/* SECTION BERITA (SEAMLESS INFINITE MARQUEE) */}
         {/* ========================================== */}
-        <section id="berita" className="py-20 bg-slate-100/70 dark:bg-slate-900/60 border-y border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white overflow-hidden w-full relative">
-          <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-10 text-center reveal-element">
+        <section id="berita" className="py-10 md:py-20 bg-slate-100/70 dark:bg-slate-900/60 border-y border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white overflow-hidden w-full relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-6 md:mb-10 text-center reveal-element">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-[11px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-3">
               Informasi Terkini
             </div>
@@ -655,8 +668,62 @@ export default function RobotikLandingPage() {
             </p>
           </div>
 
-          {/* Running Card Auto-Scroll Carousel Container (Seamless Infinite Marquee) */}
-          <div className="marquee-container relative w-full overflow-hidden py-4">
+          {/* Mobile View: 1 Card per Slide Carousel (< md) */}
+          <div className="block md:hidden px-4 max-w-sm sm:max-w-md mx-auto">
+            <MobileCarousel
+              minHeightClass="min-h-[410px]"
+              items={beritaList.map((item) => (
+                <div
+                  key={`carousel-${item.id}`}
+                  onClick={() => setSelectedBeritaModal(item)}
+                  className="w-full h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60">
+                      <img
+                        src={item.image || '/images/hero_robot.webp'}
+                        alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        width={384}
+                        height={192}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/images/hero_robot.webp';
+                        }}
+                      />
+                      <span className="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded font-mono shadow-sm">
+                        {item.category}
+                      </span>
+                    </div>
+
+                    <div className="p-5 space-y-2">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono block">
+                        📅 {item.date}
+                      </span>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                        {item.excerpt}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="px-5 pb-5 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs font-semibold text-blue-600 dark:text-blue-400">
+                    <span>Baca Selengkapnya</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            />
+          </div>
+
+          {/* Tablet & Desktop View: Running Card Auto-Scroll Carousel Container (>= md) */}
+          <div className="hidden md:block marquee-container relative w-full overflow-hidden py-4">
             {/* Left & Right edge gradient fade masks for smooth entrance/exit */}
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-28 z-10 bg-gradient-to-r from-slate-100 dark:from-slate-900 to-transparent" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-28 z-10 bg-gradient-to-l from-slate-100 dark:from-slate-900 to-transparent" />
@@ -675,6 +742,10 @@ export default function RobotikLandingPage() {
                         <img
                           src={item.image || '/images/hero_robot.webp'}
                           alt={item.title}
+                          loading="lazy"
+                          decoding="async"
+                          width={384}
+                          height={192}
                           className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
@@ -722,6 +793,10 @@ export default function RobotikLandingPage() {
                         <img
                           src={item.image || '/images/hero_robot.webp'}
                           alt={item.title}
+                          loading="lazy"
+                          decoding="async"
+                          width={384}
+                          height={192}
                           className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
@@ -764,8 +839,8 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         {/* TENTANG KAMI & LOKASI INTERACTIVE MAP      */}
         {/* ========================================== */}
-        <section id="tentang" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-14 reveal-element">
+        <section id="tentang" className="py-10 md:py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
+          <div className="text-center max-w-2xl mx-auto mb-6 md:mb-14 reveal-element">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
               Tentang Kami & Lokasi Pembelajaran
             </h2>
@@ -784,7 +859,52 @@ export default function RobotikLandingPage() {
                  AIRO adalah wadah bagi para penggemar dan praktisi Robotik untuk berbagi pengetahuan, pengalaman, serta ide-ide inovatif. Melalui kolaborasi dan pengembangan teknologi robotik, komunitas ini berperan dalam meningkatkan keterampilan serta mendorong terciptanya solusi yang bermanfaat bagi masyarakat.</p>
 
                 {/* Visi, Misi & Nilai Module Cards */}
-                <div className="space-y-4">
+                {/* Mobile View: 1 Card per Slide Carousel (< md) */}
+                <div className="block md:hidden">
+                  <MobileCarousel
+                    minHeightClass="min-h-[180px]"
+                    items={[
+                      <div key="mobile-visi" className="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl flex items-start gap-3.5 h-full">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Visi Kami</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Memberdayakan generasi muda untuk membangun teknologi dari ide secara mandiri, logis, dan inovatif.</p>
+                        </div>
+                      </div>,
+                      <div key="mobile-misi" className="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl flex items-start gap-3.5 h-full">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Misi Kami</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Menyusun kurikulum bertahap, mendampingi praktik secara intensif, dan membentuk kemandirian persoalan teknis.</p>
+                        </div>
+                      </div>,
+                      <div key="mobile-nilai" className="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl flex items-start gap-3.5 h-full">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-1.41m8.595-8.594l1.414-1.414M3.553 5.879l1.414 1.413m8.596 8.596l1.414 1.414M16.243 4.757l-1.414 1.414M6.343 14.657l-1.414 1.414M12 3v1.5M12 19.5V21" />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Nilai Kami</h4>
+                          <p className="text-xs text-rose-600 font-mono mt-0.5 font-semibold uppercase tracking-wider">Kreativitas, Kolaborasi, dan Tanggung Jawab</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Melahirkan karya inovatif yang bermanfaat bagi lingkungan sekitar, serta melatih kerja sama tim dan disiplin tinggi dalam memecahkan masalah.</p>
+                        </div>
+                      </div>
+                    ]}
+                  />
+                </div>
+
+                {/* Tablet & Desktop View: Vertical Stack Module Cards (>= md) */}
+                <div className="hidden md:block space-y-4">
                   <div className="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -854,17 +974,17 @@ export default function RobotikLandingPage() {
 
           </div>
         </section>
-        <section id="tim" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full border-t border-slate-200/60 dark:border-slate-800/60">
-          <div className="text-center max-w-2xl mx-auto mb-12 reveal-element">
+        <section id="tim" className="py-10 md:py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full border-t border-slate-200/60 dark:border-slate-800/60">
+          <div className="text-center max-w-2xl mx-auto mb-6 md:mb-12 reveal-element">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
               Pembimbing & Pengajar Kami
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 sm:mt-3 leading-relaxed">
               Mengenal tim Pembimbing dan Pengajar Fakultas Teknologi Informasi Universitas Respati Indonesia.
             </p>
 
             {/* Top Tab Buttons: Pembimbing vs Pengajar */}
-            <div className="flex items-center justify-center gap-2 mt-8 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl w-fit mx-auto border border-slate-200/80 dark:border-slate-700 shadow-inner">
+            <div className="flex items-center justify-center gap-2 mt-4 md:mt-8 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl w-fit mx-auto border border-slate-200/80 dark:border-slate-700 shadow-inner">
               <button
                 onClick={() => {
                   setTeamTab('pembimbing');
@@ -898,8 +1018,8 @@ export default function RobotikLandingPage() {
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl overflow-hidden reveal-element">
             <div className="flex flex-col md:flex-row min-h-[480px]">
               
-              {/* Left Panel: Member List Sidebar */}
-              <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 flex flex-col justify-between">
+              {/* Left Panel: Member List Sidebar (Hidden on mobile < md) */}
+              <div className="hidden md:flex w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 flex-col justify-between">
                 <div>
                   <div className="px-3 py-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wider mb-2">
                     Daftar {teamTab === 'pembimbing' ? `Pembimbing (${pembimbingList.length})` : `Pengajar (${pengajarList.length})`}
@@ -986,7 +1106,7 @@ export default function RobotikLandingPage() {
                         </span>
 
                         {/* Bottom Profile Details Gradient Banner */}
-                        <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-slate-950/90 via-slate-950/70 to-transparent backdrop-blur-[2px] text-white flex flex-col gap-1 transition-all">
+                        <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-slate-950/90 via-slate-950/70 to-transparent backdrop-blur-[2px] text-white flex flex-col gap-1 transition-all text-left">
                           <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-white leading-snug drop-shadow-sm">
                             {currentMember.name}
                           </h3>
@@ -1005,6 +1125,47 @@ export default function RobotikLandingPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Mobile Navigation Controls (< & >) below photo for fast touch browsing */}
+                      <div className="md:hidden flex items-center justify-between w-full mt-3 px-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (teamTab === 'pembimbing') {
+                              setSelectedPembimbingIndex((prev) => (prev === 0 ? pembimbingList.length - 1 : prev - 1));
+                            } else {
+                              setSelectedPengajarIndex((prev) => (prev === 0 ? pengajarList.length - 1 : prev - 1));
+                            }
+                          }}
+                          aria-label="Sebelumnya"
+                          className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                          </svg>
+                          <span>Sebelumnya</span>
+                        </button>
+                        <span className="text-[11px] font-mono font-medium text-slate-400">
+                          {(teamTab === 'pembimbing' ? selectedPembimbingIndex : selectedPengajarIndex) + 1} / {teamTab === 'pembimbing' ? pembimbingList.length : pengajarList.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (teamTab === 'pembimbing') {
+                              setSelectedPembimbingIndex((prev) => (prev + 1) % pembimbingList.length);
+                            } else {
+                              setSelectedPengajarIndex((prev) => (prev + 1) % pengajarList.length);
+                            }
+                          }}
+                          aria-label="Berikutnya"
+                          className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all"
+                        >
+                          <span>Berikutnya</span>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   );
                 })()}
@@ -1017,17 +1178,17 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         {/* HARGA & PAKET LAYANAN (TAB CONTENT)       */}
         {/* ========================================== */}
-        <section id="layanan" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full transition-colors duration-200">
-          <div className="text-center max-w-2xl mx-auto mb-12 reveal-element">
+        <section id="layanan" className="py-10 md:py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full transition-colors duration-200">
+          <div className="text-center max-w-2xl mx-auto mb-6 md:mb-12 reveal-element">
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Harga & Paket Singkat
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 sm:mt-3 leading-relaxed">
               Layanan Mingguan/Bulanan. Untuk diskon/kelas khusus, cek kontak di bawah.
             </p>
 
             {/* Tab Navigation Buttons for Layanan */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-8 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl w-fit mx-auto border border-slate-200/80 dark:border-slate-700 shadow-inner">
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 md:mt-8 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl w-fit mx-auto border border-slate-200/80 dark:border-slate-700 shadow-inner">
               <button
                 onClick={() => setActiveLayananTab('all')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all duration-200 ${
@@ -1071,8 +1232,209 @@ export default function RobotikLandingPage() {
             </div>
           </div>
 
-          {/* Pricing Grid Package Node Display */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Mobile View: 1 Card per Slide Carousel (< md) */}
+          <div className="block md:hidden max-w-sm sm:max-w-md mx-auto">
+            <MobileCarousel
+              minHeightClass="min-h-[590px]"
+              items={[
+                (activeLayananTab === 'all' || activeLayananTab === 'animal') ? (
+                  <div key="mobile-pkg-animal" className="w-full h-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+                    <div className="h-64 bg-slate-100 dark:bg-slate-950 relative overflow-hidden border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
+                      <img 
+                        src="/images/AI-Fantasy-Zoo.webp" 
+                        alt="Tema Animal - AI Fantasy Zoo" 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <span className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-blue-600/90 backdrop-blur-sm text-[10px] font-bold text-white font-mono uppercase tracking-wider shadow-sm">
+                        Level 1 • Pemula
+                      </span>
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Harga Paket</span>
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">Rp2.000.000</h3>
+                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                            💳 Cicilan Rp500.000 / 4 Bulan
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mt-3">Tema Animal (AI-Fantasy-Zoo)</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                          Membangun proyek robotik bertema hewan (Animal Robot) dengan mekanik dasar, gear system, dan pengenalan gerakan kinetik.
+                        </p>
+
+                        <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-300 text-left">
+                          <div className="flex items-start gap-2">
+                            <span className="text-blue-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Kit Hardware:</strong> AI-Fantasy-Zoo Kit (Modul Kinetik & Gear Motor)</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-blue-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Materi Utama:</strong> Pengenalan struktur mekanis, rasio gir, & keseimbangan robotik</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-blue-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Fokus Keterampilan:</strong> Melatih kecerdasan spasial, motorik halus, & daya cipta anak</span>
+                          </div>
+                          <div className="flex items-start gap-2 text-emerald-700 dark:text-emerald-400">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0">💳</span>
+                            <span><strong className="text-emerald-800 dark:text-emerald-300">Opsi Kemudahan:</strong> Dapat dicicil Rp500.000 / bulan selama 4 bulan</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">mekanik</span>
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">kinetik</span>
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">level 1</span>
+                        </div>
+                        <button 
+                          onClick={() => selectPackage('Tema Animal (Rp2.000.000)')}
+                          className="block w-full py-3 rounded-xl bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold text-xs text-center transition-all duration-200 shadow-sm"
+                        >
+                          Pilih Paket Animal
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null,
+                (activeLayananTab === 'all' || activeLayananTab === 'smart') ? (
+                  <div key="mobile-pkg-smart" className="w-full h-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+                    <div className="h-64 bg-slate-100 dark:bg-slate-950 relative overflow-hidden border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
+                      <img 
+                        src="/images/AI-Smart-Life.webp" 
+                        alt="Tema Smart Life - AI Smart Life" 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <span className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-indigo-600/90 backdrop-blur-sm text-[10px] font-bold text-white font-mono uppercase tracking-wider shadow-sm">
+                        Level 2 • Menengah
+                      </span>
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Harga Paket</span>
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">Rp2.000.000</h3>
+                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                            💳 Cicilan Rp500.000 / 4 Bulan
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mt-3">Tema Smart Life (AI-Smart-Life)</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                          Termasuk merancang & memprogram bertema smart life menggunakan sensor otomatisasi, deteksi hambatan, dan dasar sirkuit.
+                        </p>
+
+                        <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-300 text-left">
+                          <div className="flex items-start gap-2">
+                            <span className="text-indigo-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Kit Hardware:</strong> AI-Smart-Life Controller & Sensor Expansion</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-indigo-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Materi Utama:</strong> Pemrograman visual/block, deteksi sensor IR/Ultrasonic, & sistem otomatisasi</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-indigo-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Fokus Keterampilan:</strong> Logika algoritma bersyarat, problem solving, & otomatisasi pintar</span>
+                          </div>
+                          <div className="flex items-start gap-2 text-emerald-700 dark:text-emerald-400">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0">💳</span>
+                            <span><strong className="text-emerald-800 dark:text-emerald-300">Opsi Kemudahan:</strong> Dapat dicicil Rp500.000 / bulan selama 4 bulan</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">sensor</span>
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">block code</span>
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">level 2</span>
+                        </div>
+                        <button 
+                          onClick={() => selectPackage('Tema Smart Life (Rp2.000.000)')}
+                          className="block w-full py-3 rounded-xl bg-slate-900 dark:bg-blue-600 hover:bg-indigo-600 dark:hover:bg-blue-500 text-white font-bold text-xs text-center transition-all duration-200 shadow-sm"
+                        >
+                          Pilih Paket Smart Life
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null,
+                (activeLayananTab === 'all' || activeLayananTab === 'advance') ? (
+                  <div key="mobile-pkg-advance" className="w-full h-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+                    <div className="h-64 bg-slate-100 dark:bg-slate-950 relative overflow-hidden border-b border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
+                      <img 
+                        src="/images/Ukit-Advance.webp" 
+                        alt="Advance Smart Life - Ukit Advance" 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <span className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-rose-600/90 backdrop-blur-sm text-[10px] font-bold text-white font-mono uppercase tracking-wider shadow-sm">
+                        Level 3 • Lanjutan
+                      </span>
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Harga Paket</span>
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">Rp2.000.000</h3>
+                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                            💳 Cicilan Rp500.000 / 4 Bulan
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mt-3">Advance Smart Life (Ukit-Advance)</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                          Membangun proyek Advance Smart Life dengan pembelajaran pemrograman yang lebih kompleks, logika bersyarat, dan integrasi IoT.
+                        </p>
+
+                        <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-300 text-left">
+                          <div className="flex items-start gap-2">
+                            <span className="text-rose-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Kit Hardware:</strong> Ukit-Advance High-End Robotic Kit (Multi-Servo)</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-rose-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Materi Utama:</strong> Pemrograman kompleks, kontrol multi-servo axis, sensor presisi, & AI/IoT dasar</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-rose-500 font-bold shrink-0">✓</span>
+                            <span><strong className="text-slate-800 dark:text-slate-100">Fokus Keterampilan:</strong> Mekatronika murni, persiapan proyek inovasi, & persiapan kompetisi</span>
+                          </div>
+                          <div className="flex items-start gap-2 text-emerald-700 dark:text-emerald-400">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0">💳</span>
+                            <span><strong className="text-emerald-800 dark:text-emerald-300">Opsi Kemudahan:</strong> Dapat dicicil Rp500.000 / bulan selama 4 bulan</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">multi-servo</span>
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">advance</span>
+                          <span className="px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full font-mono">level 3</span>
+                        </div>
+                        <button 
+                          onClick={() => selectPackage('Advance Smart Life (Rp2.000.000)')}
+                          className="block w-full py-3 rounded-xl bg-slate-900 dark:bg-blue-600 hover:bg-rose-600 dark:hover:bg-blue-500 text-white font-bold text-xs text-center transition-all duration-200 shadow-sm"
+                        >
+                          Pilih Paket Advance
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null,
+              ].filter(Boolean)}
+            />
+          </div>
+
+          {/* Tablet & Desktop View: Pricing Grid Package Node Display (>= md) */}
+          <div className="hidden md:grid md:grid-cols-3 gap-8">
             
             {/* Card 1: Tema Animal (AI-Fantasy-Zoo) */}
             {(activeLayananTab === 'all' || activeLayananTab === 'animal') && (
@@ -1281,17 +1643,17 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         {/* POSTER PEMBELAJARAN & BROCHURE TAB SECTION */}
         {/* ========================================== */}
-        <section id="poster" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full transition-colors duration-200">
-          <div className="text-center max-w-2xl mx-auto mb-12 reveal-element">
+        <section id="poster" className="py-10 md:py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full transition-colors duration-200">
+          <div className="text-center max-w-2xl mx-auto mb-6 md:mb-12 reveal-element">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
               Poster Pembelajaran
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 sm:mt-3 leading-relaxed">
               Jelajahi poster resmi program pembelajaran robotik AIRO. Klik poster untuk memperbesar.
             </p>
 
             {/* Tab Navigation Buttons */}
-            <div className="flex items-center justify-center gap-2 mt-8 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl w-fit mx-auto border border-slate-200/80 dark:border-slate-700 shadow-inner">
+            <div className="flex items-center justify-center gap-2 mt-4 md:mt-8 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl w-fit mx-auto border border-slate-200/80 dark:border-slate-700 shadow-inner">
               <button
                 onClick={() => setActivePosterTab('all')}
                 className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-200 ${
@@ -1325,8 +1687,67 @@ export default function RobotikLandingPage() {
             </div>
           </div>
 
-          {/* Posters Display Area with Floating Animations */}
-          <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-14 py-8 px-4 overflow-hidden">
+          {/* Mobile View: 1 Card per Slide Carousel (< md) */}
+          <div className="block md:hidden max-w-sm sm:max-w-md mx-auto my-1">
+            <MobileCarousel
+              minHeightClass="min-h-0"
+              items={[
+                (activePosterTab === 'all' || activePosterTab === 'poster1') ? (
+                  <div 
+                    key="mobile-poster-1"
+                    onClick={() => setSelectedPosterModal('/images/Poster-1.webp')}
+                    className="w-full cursor-pointer p-2"
+                  >
+                    <div className="bg-slate-200/90 dark:bg-slate-800/90 p-4 rounded-3xl border border-slate-300 dark:border-slate-700 shadow-xl backdrop-blur-sm">
+                      <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
+                        <img 
+                          src="/images/Poster-1.webp" 
+                          alt="Poster 1 - AIRO Robotics" 
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-auto object-cover rounded-xl"
+                        />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between px-1">
+                        <span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Poster 1</span>
+                        <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30">
+                          Modul Program
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null,
+                (activePosterTab === 'all' || activePosterTab === 'poster2') ? (
+                  <div 
+                    key="mobile-poster-2"
+                    onClick={() => setSelectedPosterModal('/images/Poster-2.webp')}
+                    className="w-full cursor-pointer p-2"
+                  >
+                    <div className="bg-slate-200/90 dark:bg-slate-800/90 p-4 rounded-3xl border border-slate-300 dark:border-slate-700 shadow-xl backdrop-blur-sm">
+                      <div className="relative rounded-2xl overflow-hidden bg-white shadow-inner">
+                        <img 
+                          src="/images/Poster-2.webp" 
+                          alt="Poster 2 - AIRO Robotics" 
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-auto object-cover rounded-xl"
+                        />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between px-1">
+                        <span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Poster 2</span>
+                        <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30">
+                          Pendaftaran Kelas
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null,
+              ].filter(Boolean)}
+            />
+          </div>
+
+          {/* Tablet & Desktop View: Posters Display Area with Floating Animations (>= md) */}
+          <div className="hidden md:flex flex-wrap items-center justify-center gap-10 sm:gap-14 py-8 px-4 overflow-hidden">
             {/* Poster 1 Card */}
             {(activePosterTab === 'all' || activePosterTab === 'poster1') && (
               <div 
@@ -1447,26 +1868,68 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         {/* GALERI KEGIATAN              */}
         {/* ========================================== */}
-        <section id="galeri" className="py-20 bg-slate-100/60 dark:bg-slate-950 border-y border-slate-200/60 dark:border-slate-800/80 w-full transition-colors duration-200">
+        <section id="galeri" className="py-10 md:py-20 bg-slate-100/60 dark:bg-slate-950 border-y border-slate-200/60 dark:border-slate-800/80 w-full transition-colors duration-200">
           <div className="px-4 sm:px-8 max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12 reveal-element">
+            <div className="flex items-center justify-between gap-4 mb-8 sm:mb-12 reveal-element">
               <div className="text-left">
-                <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                   Galeri Kegiatan
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                 Klik tombol untuk lihat semua
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 sm:mt-2">
+                  Klik tombol untuk lihat semua
                 </p>
               </div>
               <a 
-      href="https://www.instagram.com/airoofficial_/"
-      target="_blank" className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-all shadow-sm active:scale-95">
+                href="https://www.instagram.com/airoofficial_/"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="shrink-0 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-500 text-white font-bold text-xs tracking-wide transition-all shadow-sm active:scale-95 whitespace-nowrap"
+              >
                 Lihat Semua
               </a>
             </div>
 
-            {/* Gallery Element Flex Responsive Grid Matrices Layout Container */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Mobile View: 1 Card per Slide Carousel (< md) */}
+            <div className="block md:hidden max-w-sm sm:max-w-md mx-auto">
+              <MobileCarousel
+                minHeightClass="min-h-[340px]"
+                items={[
+                  <div key="mobile-gallery-1" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div className="h-64 overflow-hidden relative">
+                      <img src="/images/gallery_level_1.webp" alt="Lego Mechanical Kit" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                      <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 1</span>
+                    </div>
+                    <div className="p-5 flex items-center gap-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Kelas Robotik Level 1</h4>
+                    </div>
+                  </div>,
+                  <div key="mobile-gallery-2" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div className="h-64 overflow-hidden relative">
+                      <img src="/images/gallery_level_2.webp" alt="Arduino sensor setup" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                      <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 2</span>
+                    </div>
+                    <div className="p-5 flex items-center gap-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Kelas Robotik Level 2</h4>
+                    </div>
+                  </div>,
+                  <div key="mobile-gallery-3" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div className="h-64 overflow-hidden relative">
+                      <img src="/images/gallery_level_3.webp" alt="Robotic Arm Setup" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                      <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">Level 3</span>
+                    </div>
+                    <div className="p-5 flex items-center gap-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Kelas Robotik level 3</h4>
+                    </div>
+                  </div>
+                ]}
+              />
+            </div>
+
+            {/* Tablet & Desktop View: Gallery Element Flex Responsive Grid Matrices Layout Container (>= md) */}
+            <div className="hidden md:grid md:grid-cols-3 gap-8">
               
               {/* Photo Card Block Module 1 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow group reveal-element reveal-delay-1">
@@ -1511,9 +1974,9 @@ export default function RobotikLandingPage() {
         {/* ========================================== */}
         {/* KONTAK & HUBUNGI KAMI            */}
         {/* ========================================== */}
-        <section id="kontak" className="py-20 bg-slate-100/60 dark:bg-slate-950 border-t border-slate-200/60 dark:border-slate-800/80 w-full transition-colors duration-200">
+        <section id="kontak" className="py-10 md:py-20 bg-slate-100/60 dark:bg-slate-950 border-t border-slate-200/60 dark:border-slate-800/80 w-full transition-colors duration-200">
           <div className="px-4 sm:px-8 max-w-7xl mx-auto">
-            <div className="text-center max-w-2xl mx-auto mb-16 reveal-element">
+            <div className="text-center max-w-2xl mx-auto mb-8 md:mb-16 reveal-element">
               <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 Kontak & Form Pengiriman Pesan
               </h2>
@@ -1526,7 +1989,7 @@ export default function RobotikLandingPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
               
               {/* Left Column Address Info Card Layout Panel */}
-              <div className="lg:col-span-5 space-y-4 text-left reveal-element reveal-delay-1">
+              <div className="w-full lg:col-span-5 space-y-4 text-left reveal-element reveal-delay-1">
                 {/* Card 1: Instagram */}
                 <a 
                   href="https://www.instagram.com/airoofficial_/" 
@@ -1611,8 +2074,8 @@ export default function RobotikLandingPage() {
                 </a>
               </div>
 
-              {/* Right Column Registration Message Input Block Forms */}
-              <div className="lg:col-span-7 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm text-left reveal-element reveal-delay-2">
+              {/* Right Column Registration Message Input Block Forms (Hidden on mobile < md to save space) */}
+              <div className="hidden md:block lg:col-span-7 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm text-left reveal-element reveal-delay-2">
                 <div className="mb-6">
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">Kirim Pesan Langsung</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -1781,8 +2244,10 @@ export default function RobotikLandingPage() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsLoginModalOpen(false)}
-                className="w-6 h-6 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center text-xs"
+                aria-label="Tutup modal login"
+                className="w-8 h-8 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center text-sm transition-colors"
               >
                 ✕
               </button>
@@ -1811,15 +2276,16 @@ export default function RobotikLandingPage() {
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-3 pr-9 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-blue-600"
+                    className="w-full pl-3 pr-10 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-blue-600"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 w-8 h-8 flex items-center justify-center rounded"
                     title={showPassword ? "Sembunyikan" : "Tampilkan"}
                   >
-                    {showPassword ? <FaEyeSlash className="w-3.5 h-3.5" /> : <FaEye className="w-3.5 h-3.5" />}
+                    {showPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
