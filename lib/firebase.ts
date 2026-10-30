@@ -41,6 +41,44 @@ export const auth = app ? getAuth(app) : (null as any);
 export { app };
 
 /**
+ * Normalizes any image source (raw SVG XML string, Data URI, full URL, or local path)
+ * into a valid URI format that <img src="..." /> can safely display.
+ */
+export function formatImageSrc(src?: string | null): string {
+  if (!src) return '/images/hero_robot.webp';
+  const trimmed = src.trim();
+  if (!trimmed) return '/images/hero_robot.webp';
+
+  // 1. Raw SVG markup: auto-convert to safe base64 Data URI
+  if (trimmed.startsWith('<svg') || trimmed.startsWith('<?xml')) {
+    try {
+      if (typeof window !== 'undefined') {
+        const base64 = window.btoa(unescape(encodeURIComponent(trimmed)));
+        return `data:image/svg+xml;base64,${base64}`;
+      } else {
+        const base64 = Buffer.from(trimmed, 'utf8').toString('base64');
+        return `data:image/svg+xml;base64,${base64}`;
+      }
+    } catch {
+      return `data:image/svg+xml;utf8,${encodeURIComponent(trimmed)}`;
+    }
+  }
+
+  // 2. Data URI, absolute URL, or root path
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('/')
+  ) {
+    return trimmed;
+  }
+
+  // 3. Relative path without leading slash
+  return `/${trimmed}`;
+}
+
+/**
  * Subscribe to real-time changes in a Firestore collection
  */
 export function subscribeToCollection<T>(
@@ -58,10 +96,15 @@ export function subscribeToCollection<T>(
     return onSnapshot(
       q,
       (snapshot) => {
-        const items: T[] = snapshot.docs.map((docSnap) => ({
-          ...(docSnap.data() as T),
-          id: docSnap.id,
-        }));
+        const items: T[] = snapshot.docs.map((docSnap) => {
+          const raw = docSnap.data() as any;
+          return {
+            ...raw,
+            id: docSnap.id,
+            // Fallback for field aliases: 'image', 'foto', 'photo', 'imageUrl', 'url', 'svg'
+            image: raw.image || raw.foto || raw.photo || raw.imageUrl || raw.url || raw.svg || '',
+          } as T;
+        });
         onUpdate(items);
       },
       (err) => {

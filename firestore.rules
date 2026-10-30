@@ -1,30 +1,84 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Koleksi Pengajar, Pembimbing, dan Berita
-    // Dapat dibaca oleh semua pengunjung website (read: true)
-    // Dapat ditambah, diedit, atau dihapus oleh admin (write: true)
-    match /pengajar/{docId} {
-      allow read, write: if true;
-    }
-    match /pembimbing/{docId} {
-      allow read, write: if true;
-    }
-    match /berita/{docId} {
-      allow read, write: if true;
+
+    // Helper: Verifikasi apakah pengguna adalah Admin resmi (Sentuary via GitHub atau Email Admin AIRO)
+    function isAdmin() {
+      return request.auth != null && (
+        (request.auth.token.firebase.sign_in_provider == 'github.com' && request.auth.token.email == 'rashif368@gmail.com') ||
+        (request.auth.token.email in ['rashif368@gmail.com', 'admin@airo.urindo.ac.id'])
+      );
     }
 
-    // 2. Koleksi Admin & Konfigurasi Sistem
+    // ========================================================
+    // 1. KOLEKSI PORTOFOLIO PRIBADI (SENTUARY)
+    // ========================================================
+
+    // Proyek (Projects): Publik bebas membaca, hanya Admin yang boleh mengelola
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Keahlian (Skills): Publik bebas membaca, hanya Admin yang boleh mengelola
+    match /skills/{skillId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Live Chat:
+    // - Publik dapat melihat riwayat pesan
+    // - Pengguna terotentikasi dapat mengirim pesan baru (dengan validasi data)
+    // - Pesan tidak dapat diubah (anti-tampering)
+    // - Pesan hanya dapat dihapus oleh Admin (moderasi) atau oleh pemilik pesan
+    match /live_chat/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null && 
+                       request.resource.data.uid == request.auth.uid &&
+                       request.resource.data.text is string &&
+                       request.resource.data.text.size() > 0 &&
+                       request.resource.data.text.size() <= 1000;
+      allow update: if false;
+      allow delete: if request.auth != null && 
+                       (isAdmin() || resource.data.uid == request.auth.uid);
+    }
+
+    // ========================================================
+    // 2. KOLEKSI WEBSITE AIRO 2026
+    // ========================================================
+
+    // Tenaga Pengajar: Publik bebas melihat profil & foto SVG, hanya Admin yang boleh menambah/mengubah/menghapus
+    match /pengajar/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Dosen Pembimbing: Publik bebas melihat profil & foto SVG, hanya Admin yang boleh menambah/mengubah/menghapus
+    match /pembimbing/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Berita & Pengumuman: Publik bebas membaca berita, hanya Admin yang boleh mempublikasikan
+    match /berita/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Koleksi Manajemen Admin & Konfigurasi: Terkunci total, hanya Admin resmi yang bisa mengakses
     match /admin_users/{userId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
     match /admin_config/{configId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
 
-    // 3. Fallback aturan default
+    // ========================================================
+    // 3. DEFAULT FAIL-SAFE (ZERO TRUST)
+    // ========================================================
+    // Menolak seluruh akses ke dokumen/koleksi lain yang tidak terdaftar secara eksplisit
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

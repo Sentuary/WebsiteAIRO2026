@@ -17,6 +17,7 @@ import {
   logoutAdminFromFirebase,
   onAdminAuthStateChanged,
   seedAdminUserIfNotExist,
+  formatImageSrc,
 } from "@/lib/firebase";
 
 interface FormData {
@@ -681,7 +682,7 @@ export default function RobotikLandingPage() {
                   <div>
                     <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60">
                       <img
-                        src={item.image || '/images/hero_robot.webp'}
+                        src={formatImageSrc(item.image)}
                         alt={item.title}
                         loading="lazy"
                         decoding="async"
@@ -740,7 +741,7 @@ export default function RobotikLandingPage() {
                     <div>
                       <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60">
                         <img
-                          src={item.image || '/images/hero_robot.webp'}
+                          src={formatImageSrc(item.image)}
                           alt={item.title}
                           loading="lazy"
                           decoding="async"
@@ -791,7 +792,7 @@ export default function RobotikLandingPage() {
                     <div>
                       <div className="h-48 relative overflow-hidden bg-slate-100 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60">
                         <img
-                          src={item.image || '/images/hero_robot.webp'}
+                          src={formatImageSrc(item.image)}
                           alt={item.title}
                           loading="lazy"
                           decoding="async"
@@ -1031,21 +1032,36 @@ export default function RobotikLandingPage() {
                             key={item.id}
                             id={`team-btn-pembimbing-${idx}`}
                             onClick={() => setSelectedPembimbingIndex(idx)}
-                            className={`w-full text-left p-3.5 rounded-2xl text-xs transition-all duration-300 flex flex-col gap-0.5 group ${
+                            className={`w-full text-left p-2.5 rounded-2xl text-xs transition-all duration-300 flex items-center gap-2.5 group ${
                               selectedPembimbingIndex === idx
                                 ? 'bg-slate-700 dark:bg-blue-600 text-white font-bold shadow-md scale-[1.02]'
                                 : 'text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800/80 hover:shadow-xs'
                             }`}
                           >
-                            <span className="font-extrabold leading-snug">{item.name}</span>
-                            <span className={`text-[11px] leading-tight ${selectedPembimbingIndex === idx ? 'text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
-                              {item.role}
-                            </span>
-                            {item.institution && (
-                              <span className={`text-[10px] leading-tight truncate mt-0.5 ${selectedPembimbingIndex === idx ? 'text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
-                                {item.institution}
+                            <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-xs flex items-center justify-center">
+                              <img
+                                src={formatImageSrc(item.image)}
+                                alt={item.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = '/images/hero_robot.webp';
+                                }}
+                              />
+                            </div>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="font-extrabold leading-snug truncate">{item.name}</span>
+                              <span className={`text-[11px] leading-tight truncate ${selectedPembimbingIndex === idx ? 'text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {item.role}
                               </span>
-                            )}
+                              {item.institution && (
+                                <span className={`text-[10px] leading-tight truncate mt-0.5 ${selectedPembimbingIndex === idx ? 'text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
+                                  {item.institution}
+                                </span>
+                              )}
+                            </div>
                           </button>
                         ))
                       : pengajarList.map((item, idx) => (
@@ -1053,21 +1069,36 @@ export default function RobotikLandingPage() {
                             key={item.id}
                             id={`team-btn-pengajar-${idx}`}
                             onClick={() => setSelectedPengajarIndex(idx)}
-                            className={`w-full text-left p-3.5 rounded-2xl text-xs transition-all duration-300 flex flex-col gap-0.5 group ${
+                            className={`w-full text-left p-2.5 rounded-2xl text-xs transition-all duration-300 flex items-center gap-2.5 group ${
                               selectedPengajarIndex === idx
                                 ? 'bg-slate-700 dark:bg-blue-600 text-white font-bold shadow-md scale-[1.02]'
                                 : 'text-slate-800 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800/80 hover:shadow-xs'
                             }`}
                           >
-                            <span className="font-extrabold leading-snug">{item.name}</span>
-                            <span className={`text-[11px] leading-tight ${selectedPengajarIndex === idx ? 'text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
-                              {item.role}
-                            </span>
-                            {item.institution && (
-                              <span className={`text-[10px] leading-tight truncate mt-0.5 ${selectedPengajarIndex === idx ? 'text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
-                                {item.institution}
+                            <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-xs flex items-center justify-center">
+                              <img
+                                src={formatImageSrc(item.image)}
+                                alt={item.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = '/images/hero_robot.webp';
+                                }}
+                              />
+                            </div>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="font-extrabold leading-snug truncate">{item.name}</span>
+                              <span className={`text-[11px] leading-tight truncate ${selectedPengajarIndex === idx ? 'text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {item.role}
                               </span>
-                            )}
+                              {item.institution && (
+                                <span className={`text-[10px] leading-tight truncate mt-0.5 ${selectedPengajarIndex === idx ? 'text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
+                                  {item.institution}
+                                </span>
+                              )}
+                            </div>
                           </button>
                         ))}
                   </div>
@@ -1089,7 +1120,7 @@ export default function RobotikLandingPage() {
                       <div className="relative w-full h-[360px] sm:h-[420px] md:h-[460px] rounded-[28px] overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-md bg-slate-50 dark:bg-slate-950 flex items-center justify-center group">
                         <img 
                           key={currentMember.id}
-                          src={currentMember.image || '/images/hero_robot.webp'} 
+                          src={formatImageSrc(currentMember.image)} 
                           alt={currentMember.name} 
                           loading="lazy"
                           decoding="async"
@@ -2204,7 +2235,7 @@ export default function RobotikLandingPage() {
 
             <div className="h-56 sm:h-72 relative rounded-lg overflow-hidden mb-4 shrink-0 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
               <img 
-                src={selectedBeritaModal.image || '/images/hero_robot.webp'} 
+                src={formatImageSrc(selectedBeritaModal.image)} 
                 alt={selectedBeritaModal.title} 
                 className="w-full h-full object-cover" 
                 onError={(e) => {

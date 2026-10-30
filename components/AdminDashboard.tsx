@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { saveDocument, removeDocument } from '@/lib/firebase';
+import { saveDocument, removeDocument, formatImageSrc } from '@/lib/firebase';
 
 export interface BeritaItem {
   id: string;
@@ -449,7 +449,7 @@ export default function AdminDashboard({
                           <td className="py-2.5 px-3.5 align-middle">
                             <div className="w-12 h-9 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
                               <img
-                                src={item.image || '/images/hero_robot.webp'}
+                                src={formatImageSrc(item.image)}
                                 alt={item.title}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -524,7 +524,7 @@ export default function AdminDashboard({
                           <td className="py-2.5 px-3.5 align-middle">
                             <div className="w-10 h-10 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
                               <img
-                                src={item.image || '/images/hero_robot.webp'}
+                                src={formatImageSrc(item.image)}
                                 alt={item.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -741,7 +741,7 @@ export default function AdminDashboard({
                 {formImage && (
                   <div className="mt-2 flex items-center gap-2">
                     <div className="w-16 h-12 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                      <img src={formImage} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={formatImageSrc(formImage)} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
                       ✓ Gambar siap disimpan ke Firestore

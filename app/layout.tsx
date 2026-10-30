@@ -86,6 +86,16 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://airo.urindo.ac.id",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.webp", type: "image/webp" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: ["/favicon.webp"],
+    apple: [
+      { url: "/favicon.webp", type: "image/webp" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
