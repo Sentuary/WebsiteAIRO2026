@@ -465,17 +465,21 @@ export default function AdminDashboard({
         {/* Top Header Bar - Flat Design */}
         <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-blue-600 text-white flex items-center justify-center font-mono font-bold text-xs">
-              AI
-            </div>
+          
+             <img 
+              src="/favicon.ico" 
+              width={180}
+              height={44}
+              fetchPriority="high"
+              decoding="async"
+              className="h-9 sm:h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  Panel Administrasi Konten
+                <h2 className="text-md font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                  Admin Panel
                 </h2>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                  FTI URINDO
-                </span>
+               
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Kelola publikasi berita, paket robotic, poster promosi, dan profil tim
