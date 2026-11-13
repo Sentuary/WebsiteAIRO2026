@@ -2,35 +2,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Verifikasi apakah pengguna adalah Admin resmi (Sentuary via GitHub atau Email Admin AIRO)
-    function isAdmin() {
-      return request.auth != null && (
-        (request.auth.token.firebase.sign_in_provider == 'github.com' && request.auth.token.email == 'rashif368@gmail.com') ||
-        (request.auth.token.email in ['rashif368@gmail.com', 'admin@airo.urindo.ac.id'])
-      );
+    // Helper: Siapa pun yang login resmi via Firebase Authentication adalah Admin resmi
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
     // ========================================================
-    // 1. KOLEKSI PORTOFOLIO PRIBADI (SENTUARY)
+    // 1. KOLEKSI WEBSITE PORTOFOLIO (SENTUARY)
     // ========================================================
 
-    // Proyek (Projects): Publik bebas membaca, hanya Admin yang boleh mengelola
     match /projects/{projectId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
-    // Keahlian (Skills): Publik bebas membaca, hanya Admin yang boleh mengelola
     match /skills/{skillId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
-    // Live Chat:
-    // - Publik dapat melihat riwayat pesan
-    // - Pengguna terotentikasi dapat mengirim pesan baru (dengan validasi data)
-    // - Pesan tidak dapat diubah (anti-tampering)
-    // - Pesan hanya dapat dihapus oleh Admin (moderasi) atau oleh pemilik pesan
     match /live_chat/{messageId} {
       allow read: if true;
       allow create: if request.auth != null && 
@@ -39,38 +29,49 @@ service cloud.firestore {
                        request.resource.data.text.size() > 0 &&
                        request.resource.data.text.size() <= 1000;
       allow update: if false;
-      allow delete: if request.auth != null && 
-                       (isAdmin() || resource.data.uid == request.auth.uid);
+      allow delete: if request.auth != null;
     }
 
     // ========================================================
-    // 2. KOLEKSI WEBSITE AIRO 2026
+    // 2. KOLEKSI WEBSITE AIRO 2026 (MURNI DINAMIS & AMAN)
     // ========================================================
 
-    // Tenaga Pengajar: Publik bebas melihat profil & foto SVG, hanya Admin yang boleh menambah/mengubah/menghapus
+    // Tenaga Pengajar: Publik bebas melihat profil & foto SVG, Admin boleh CRUD
     match /pengajar/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
-    // Dosen Pembimbing: Publik bebas melihat profil & foto SVG, hanya Admin yang boleh menambah/mengubah/menghapus
+    // Dosen Pembimbing: Publik bebas melihat profil & foto SVG, Admin boleh CRUD
     match /pembimbing/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
-    // Berita & Pengumuman: Publik bebas membaca berita, hanya Admin yang boleh mempublikasikan
+    // Berita & Pengumuman: Publik bebas membaca berita, Admin boleh CRUD
     match /berita/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
-    // Koleksi Manajemen Admin & Konfigurasi: Terkunci total, hanya Admin resmi yang bisa mengakses
+    // Poster & Media Promosi: Publik bebas melihat poster SVG/WebP, Admin boleh CRUD
+    match /posters/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Harga & Paket Layanan (Paket Robotic, dll): Publik bebas melihat, Admin boleh CRUD
+    match /layanan/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Koleksi Manajemen Admin & Konfigurasi
     match /admin_users/{userId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
     match /admin_config/{configId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
 
     // ========================================================

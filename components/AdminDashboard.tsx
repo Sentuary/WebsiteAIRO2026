@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { saveDocument, removeDocument, formatImageSrc } from '@/lib/firebase';
+import { INITIAL_LAYANAN, INITIAL_POSTERS } from '@/lib/initialData';
 
 export interface BeritaItem {
   id: string;
@@ -22,6 +23,28 @@ export interface TeamMemberItem {
   image: string;
 }
 
+export interface PosterItem {
+  id: string;
+  title: string;
+  category: string;
+  image: string;
+  description?: string;
+}
+
+export interface LayananItem {
+  id: string;
+  group: string; // "Paket Robotic"
+  level: string; // "Level 1 • Pemula"
+  title: string; // "Tema Animal (AI-Fantasy-Zoo)"
+  price: string; // "Rp2.000.000"
+  installment?: string; // "Cicilan Rp500.000 / 4 Bulan"
+  description: string;
+  features: string[];
+  tags: string[];
+  image: string;
+  buttonText?: string;
+}
+
 interface AdminDashboardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +55,10 @@ interface AdminDashboardProps {
   setPengajarList: React.Dispatch<React.SetStateAction<TeamMemberItem[]>>;
   pembimbingList: TeamMemberItem[];
   setPembimbingList: React.Dispatch<React.SetStateAction<TeamMemberItem[]>>;
+  layananList: LayananItem[];
+  setLayananList: React.Dispatch<React.SetStateAction<LayananItem[]>>;
+  posterList: PosterItem[];
+  setPosterList: React.Dispatch<React.SetStateAction<PosterItem[]>>;
 }
 
 export default function AdminDashboard({
@@ -44,8 +71,12 @@ export default function AdminDashboard({
   setPengajarList,
   pembimbingList,
   setPembimbingList,
+  layananList,
+  setLayananList,
+  posterList,
+  setPosterList,
 }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'berita' | 'pengajar' | 'pembimbing'>('berita');
+  const [activeTab, setActiveTab] = useState<'berita' | 'pengajar' | 'pembimbing' | 'layanan' | 'poster'>('berita');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
 
@@ -87,7 +118,7 @@ export default function AdminDashboard({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; title: string } | null>(null);
 
-  // Form Fields
+  // Form Fields - Berita & Team
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState('Kegiatan');
   const [formDate, setFormDate] = useState('');
@@ -97,6 +128,15 @@ export default function AdminDashboard({
   const [formRole, setFormRole] = useState('');
   const [formInstitution, setFormInstitution] = useState('Universitas Respati Indonesia (URINDO)');
   const [formImage, setFormImage] = useState('');
+
+  // Form Fields - Layanan (Paket Robotic)
+  const [formGroup, setFormGroup] = useState('Paket Robotic');
+  const [formLevel, setFormLevel] = useState('Level 1 • Pemula');
+  const [formPrice, setFormPrice] = useState('Rp2.000.000');
+  const [formInstallment, setFormInstallment] = useState('Cicilan Rp500.000 / 4 Bulan');
+  const [formFeatures, setFormFeatures] = useState('');
+  const [formTags, setFormTags] = useState('');
+  const [formButtonText, setFormButtonText] = useState('Pilih Paket');
 
   // Image uploader with automatic SVG conversion for direct Firestore storage
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,6 +170,9 @@ export default function AdminDashboard({
 
   const openCreateModal = () => {
     setEditingItem(null);
+    setUploadError(null);
+
+    // Reset base fields
     setFormTitle('');
     setFormCategory('Kegiatan');
     setFormDate(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
@@ -139,13 +182,28 @@ export default function AdminDashboard({
     setFormRole(activeTab === 'pengajar' ? 'Asisten Trainer' : 'Dosen / Peneliti FTI');
     setFormInstitution('Universitas Respati Indonesia (URINDO)');
     setFormImage('');
-    setUploadError(null);
+
+    // Reset Layanan fields
+    setFormGroup('Paket Robotic');
+    setFormLevel('Level 1 • Pemula');
+    setFormPrice('Rp2.000.000');
+    setFormInstallment('Cicilan Rp500.000 / 4 Bulan');
+    setFormFeatures('Kit Hardware: AI-Fantasy-Zoo Kit (Modul Kinetik & Gear Motor)\nMateri Utama: Pengenalan struktur mekanis, rasio gir, & keseimbangan robotik\nFokus Keterampilan: Melatih kecerdasan spasial, motorik halus, & daya cipta anak\nOpsi Kemudahan: Dapat dicicil Rp500.000 / bulan selama 4 bulan');
+    setFormTags('mekanik, kinetik, level 1');
+    setFormButtonText('Pilih Paket');
+
+    if (activeTab === 'poster') {
+      setFormCategory('Modul Program');
+      setFormTitle(`Poster ${posterList.length + 1}`);
+    }
+
     setIsModalOpen(true);
   };
 
   const openEditModal = (item: any) => {
     setEditingItem(item);
     setUploadError(null);
+
     if (activeTab === 'berita') {
       setFormTitle(item.title || '');
       setFormCategory(item.category || 'Kegiatan');
@@ -153,17 +211,36 @@ export default function AdminDashboard({
       setFormExcerpt(item.excerpt || '');
       setFormContent(item.content || '');
       setFormImage(item.image || '');
+    } else if (activeTab === 'poster') {
+      setFormTitle(item.title || '');
+      setFormCategory(item.category || 'Modul Program');
+      setFormExcerpt(item.description || '');
+      setFormImage(item.image || '');
+    } else if (activeTab === 'layanan') {
+      setFormGroup(item.group || 'Paket Robotic');
+      setFormLevel(item.level || 'Level 1 • Pemula');
+      setFormTitle(item.title || '');
+      setFormPrice(item.price || 'Rp2.000.000');
+      setFormInstallment(item.installment || 'Cicilan Rp500.000 / 4 Bulan');
+      setFormExcerpt(item.description || '');
+      setFormFeatures(Array.isArray(item.features) ? item.features.join('\n') : '');
+      setFormTags(Array.isArray(item.tags) ? item.tags.join(', ') : '');
+      setFormButtonText(item.buttonText || 'Pilih Paket');
+      setFormImage(item.image || '');
     } else {
       setFormName(item.name || '');
       setFormRole(item.role || '');
       setFormInstitution(item.institution || '');
       setFormImage(item.image || '');
     }
+
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let success = false;
 
     if (activeTab === 'berita') {
       const updatedItem: BeritaItem = {
@@ -177,13 +254,12 @@ export default function AdminDashboard({
       };
 
       setBeritaList((prev) => {
-        const next = editingItem
+        return editingItem
           ? prev.map((item) => (item.id === editingItem.id ? updatedItem : item))
           : [updatedItem, ...prev];
-        return next;
       });
 
-      await saveDocument('berita', updatedItem.id, updatedItem);
+      success = await saveDocument('berita', updatedItem.id, updatedItem);
 
     } else if (activeTab === 'pengajar') {
       const updatedItem: TeamMemberItem = {
@@ -196,13 +272,12 @@ export default function AdminDashboard({
       };
 
       setPengajarList((prev) => {
-        const next = editingItem
+        return editingItem
           ? prev.map((item) => (item.id === editingItem.id ? updatedItem : item))
           : [...prev, updatedItem];
-        return next;
       });
 
-      await saveDocument('pengajar', updatedItem.id, updatedItem);
+      success = await saveDocument('pengajar', updatedItem.id, updatedItem);
 
     } else if (activeTab === 'pembimbing') {
       const updatedItem: TeamMemberItem = {
@@ -215,13 +290,66 @@ export default function AdminDashboard({
       };
 
       setPembimbingList((prev) => {
-        const next = editingItem
+        return editingItem
           ? prev.map((item) => (item.id === editingItem.id ? updatedItem : item))
           : [...prev, updatedItem];
-        return next;
       });
 
-      await saveDocument('pembimbing', updatedItem.id, updatedItem);
+      success = await saveDocument('pembimbing', updatedItem.id, updatedItem);
+
+    } else if (activeTab === 'poster') {
+      const updatedItem: PosterItem = {
+        id: editingItem ? editingItem.id : `poster-${Date.now()}`,
+        title: formTitle || `Poster ${posterList.length + 1}`,
+        category: formCategory || 'Modul Program',
+        description: formExcerpt || '',
+        image: formImage || editingItem?.image || '/images/Poster-1.webp',
+      };
+
+      setPosterList((prev) => {
+        return editingItem
+          ? prev.map((item) => (item.id === editingItem.id ? updatedItem : item))
+          : [...prev, updatedItem];
+      });
+
+      success = await saveDocument('posters', updatedItem.id, updatedItem);
+
+    } else if (activeTab === 'layanan') {
+      const parsedFeatures = formFeatures
+        .split('\n')
+        .map((f) => f.trim())
+        .filter(Boolean);
+
+      const parsedTags = formTags
+        .split(',')
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
+
+      const updatedItem: LayananItem = {
+        id: editingItem ? editingItem.id : `layanan-${Date.now()}`,
+        group: formGroup || 'Paket Robotic',
+        level: formLevel || 'Level 1 • Pemula',
+        title: formTitle,
+        price: formPrice,
+        installment: formInstallment,
+        description: formExcerpt,
+        features: parsedFeatures,
+        tags: parsedTags,
+        buttonText: formButtonText || 'Pilih Paket',
+        image: formImage || editingItem?.image || '/images/AI-Fantasy-Zoo.webp',
+      };
+
+      setLayananList((prev) => {
+        return editingItem
+          ? prev.map((item) => (item.id === editingItem.id ? updatedItem : item))
+          : [...prev, updatedItem];
+      });
+
+      success = await saveDocument('layanan', updatedItem.id, updatedItem);
+    }
+
+    if (!success) {
+      alert('Perhatian: Gagal menyimpan data ke Firestore Database. Pastikan Firestore Security Rules di Firebase Console mengizinkan operasi tulis (write).');
     }
 
     setIsModalOpen(false);
@@ -231,18 +359,49 @@ export default function AdminDashboard({
     if (!itemToDelete) return;
     const { id } = itemToDelete;
 
+    let success = false;
+
     if (activeTab === 'berita') {
       setBeritaList((prev) => prev.filter((b) => b.id !== id));
-      removeDocument('berita', id);
+      success = await removeDocument('berita', id);
     } else if (activeTab === 'pengajar') {
       setPengajarList((prev) => prev.filter((p) => p.id !== id));
-      removeDocument('pengajar', id);
+      success = await removeDocument('pengajar', id);
     } else if (activeTab === 'pembimbing') {
       setPembimbingList((prev) => prev.filter((p) => p.id !== id));
-      removeDocument('pembimbing', id);
+      success = await removeDocument('pembimbing', id);
+    } else if (activeTab === 'poster') {
+      setPosterList((prev) => prev.filter((p) => p.id !== id));
+      success = await removeDocument('posters', id);
+    } else if (activeTab === 'layanan') {
+      setLayananList((prev) => prev.filter((l) => l.id !== id));
+      success = await removeDocument('layanan', id);
+    }
+
+    if (!success) {
+      alert('Perhatian: Gagal menghapus data dari Firestore Database. Pastikan Firestore Security Rules di Firebase Console mengizinkan operasi delete.');
     }
 
     setItemToDelete(null);
+  };
+
+  // Seed default template helpers
+  const handleSeedDefaultLayanan = async () => {
+    if (!confirm('Apakah Anda yakin ingin memuat 3 paket default "Paket Robotic" ke Firebase?')) return;
+    for (const item of INITIAL_LAYANAN) {
+      await saveDocument('layanan', item.id, item);
+    }
+    setLayananList(INITIAL_LAYANAN);
+    alert('Berhasil memuat 3 paket "Paket Robotic" ke Firebase!');
+  };
+
+  const handleSeedDefaultPosters = async () => {
+    if (!confirm('Apakah Anda yakin ingin memuat 2 poster default ke Firebase?')) return;
+    for (const item of INITIAL_POSTERS) {
+      await saveDocument('posters', item.id, item);
+    }
+    setPosterList(INITIAL_POSTERS);
+    alert('Berhasil memuat 2 poster default ke Firebase!');
   };
 
   // Filtered lists based on search & category
@@ -276,6 +435,27 @@ export default function AdminDashboard({
     });
   }, [pembimbingList, searchQuery]);
 
+  const filteredLayanan = useMemo(() => {
+    return layananList.filter((item) => {
+      return (
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.group.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.level.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [layananList, searchQuery]);
+
+  const filteredPosters = useMemo(() => {
+    return posterList.filter((item) => {
+      return (
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [posterList, searchQuery]);
+
   if (!isOpen) return null;
 
   return (
@@ -298,7 +478,7 @@ export default function AdminDashboard({
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Kelola publikasi berita, dokumentasi kegiatan, dan profil tim
+                Kelola publikasi berita, paket robotic, poster promosi, dan profil tim
               </p>
             </div>
           </div>
@@ -327,13 +507,13 @@ export default function AdminDashboard({
         </div>
 
         {/* Tab Navigation - Flat Underline */}
-        <div className="px-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex items-center gap-2 shrink-0">
+        <div className="px-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex items-center gap-2 shrink-0 overflow-x-auto">
           <button
             onClick={() => {
               setActiveTab('berita');
               setSearchQuery('');
             }}
-            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
               activeTab === 'berita'
                 ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
                 : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -347,10 +527,44 @@ export default function AdminDashboard({
 
           <button
             onClick={() => {
+              setActiveTab('layanan');
+              setSearchQuery('');
+            }}
+            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
+              activeTab === 'layanan'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            <span>Paket Layanan</span>
+            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold">
+              {layananList.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('poster');
+              setSearchQuery('');
+            }}
+            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
+              activeTab === 'poster'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            <span>Poster Promosi</span>
+            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              {posterList.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
               setActiveTab('pengajar');
               setSearchQuery('');
             }}
-            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
               activeTab === 'pengajar'
                 ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
                 : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -367,7 +581,7 @@ export default function AdminDashboard({
               setActiveTab('pembimbing');
               setSearchQuery('');
             }}
-            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-2.5 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
               activeTab === 'pembimbing'
                 ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
                 : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -390,6 +604,10 @@ export default function AdminDashboard({
               placeholder={
                 activeTab === 'berita'
                   ? 'Cari judul atau isi berita...'
+                  : activeTab === 'layanan'
+                  ? 'Cari judul, grup (Paket Robotic), atau level...'
+                  : activeTab === 'poster'
+                  ? 'Cari judul poster atau kategori...'
                   : 'Cari nama, peran, atau institusi...'
               }
               className="w-full px-3 py-1.5 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-600"
@@ -410,19 +628,43 @@ export default function AdminDashboard({
             )}
           </div>
 
-          <button
-            onClick={openCreateModal}
-            className="px-3.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
-          >
-            <span>+</span>
-            <span>
-              Tambah {activeTab === 'berita' ? 'Berita' : activeTab === 'pengajar' ? 'Pengajar' : 'Pembimbing'}
-            </span>
-          </button>
+          <div className="flex items-center gap-2">
+            {activeTab === 'layanan' && layananList.length === 0 && (
+              <button
+                type="button"
+                onClick={handleSeedDefaultLayanan}
+                className="px-3 py-1.5 rounded border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+              >
+                + Muat 3 Paket Robotic Awal
+              </button>
+            )}
+
+            {activeTab === 'poster' && posterList.length === 0 && (
+              <button
+                type="button"
+                onClick={handleSeedDefaultPosters}
+                className="px-3 py-1.5 rounded border border-indigo-300 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
+              >
+                + Muat 2 Poster Awal
+              </button>
+            )}
+
+            <button
+              onClick={openCreateModal}
+              className="px-3.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <span>+</span>
+              <span>
+                Tambah {activeTab === 'berita' ? 'Berita' : activeTab === 'layanan' ? 'Paket Layanan' : activeTab === 'poster' ? 'Poster' : activeTab === 'pengajar' ? 'Pengajar' : 'Pembimbing'}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Content Table - Flat Clean Rows */}
         <div className="p-5 overflow-y-auto flex-1 bg-slate-50/40 dark:bg-slate-950">
+          
+          {/* TAB BERITA */}
           {activeTab === 'berita' && (
             <div className="border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 overflow-hidden">
               <div className="overflow-x-auto">
@@ -431,8 +673,8 @@ export default function AdminDashboard({
                     <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 font-semibold">
                       <th className="py-2.5 px-3.5 w-16">Foto</th>
                       <th className="py-2.5 px-3.5">Judul & Ringkasan</th>
-                      <th className="py-2.5 px-3.5 w-24">Kategori</th>
-                      <th className="py-2.5 px-3.5 w-28">Tanggal</th>
+                      <th className="py-2.5 px-3.5 w-36 whitespace-nowrap">Kategori</th>
+                      <th className="py-2.5 px-3.5 w-32 whitespace-nowrap">Tanggal</th>
                       <th className="py-2.5 px-3.5 w-24 text-right">Aksi</th>
                     </tr>
                   </thead>
@@ -448,43 +690,29 @@ export default function AdminDashboard({
                         <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
                           <td className="py-2.5 px-3.5 align-middle">
                             <div className="w-12 h-9 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                              <img
-                                src={formatImageSrc(item.image)}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = '/images/hero_robot.webp';
-                                }}
-                              />
+                              <img src={formatImageSrc(item.image)} alt={item.title} className="w-full h-full object-cover" />
                             </div>
                           </td>
-                          <td className="py-2.5 px-3.5 align-middle">
-                            <div className="font-semibold text-slate-900 dark:text-white line-clamp-1">
-                              {item.title}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
-                              {item.excerpt}
-                            </div>
+                          <td className="py-2.5 px-3.5">
+                            <p className="font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">{item.title}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{item.excerpt}</p>
                           </td>
-                          <td className="py-2.5 px-3.5 align-middle">
-                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          <td className="py-2.5 px-3.5 align-middle whitespace-nowrap">
+                            <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-semibold font-mono bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900 whitespace-nowrap">
                               {item.category}
                             </span>
                           </td>
-                          <td className="py-2.5 px-3.5 align-middle font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                            {item.date}
-                          </td>
-                          <td className="py-2.5 px-3.5 align-middle text-right space-x-1.5 whitespace-nowrap">
+                          <td className="py-2.5 px-3.5 font-mono text-slate-600 dark:text-slate-400">{item.date}</td>
+                          <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
                             <button
                               onClick={() => openEditModal(item)}
-                              className="px-2 py-1 rounded text-xs font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                              className="px-2 py-1 text-blue-600 hover:text-blue-800 font-semibold"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => setItemToDelete({ id: item.id, title: item.title })}
-                              className="px-2 py-1 rounded text-xs font-medium text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+                              className="px-2 py-1 text-rose-600 hover:text-rose-800 font-semibold ml-1"
                             >
                               Hapus
                             </button>
@@ -498,61 +726,183 @@ export default function AdminDashboard({
             </div>
           )}
 
-          {(activeTab === 'pengajar' || activeTab === 'pembimbing') && (
+          {/* TAB PAKET LAYANAN (GRUP PAKET ROBOTIC) */}
+          {activeTab === 'layanan' && (
             <div className="border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 font-semibold">
-                      <th className="py-2.5 px-3.5 w-14">Foto</th>
-                      <th className="py-2.5 px-3.5">Nama Lengkap</th>
+                      <th className="py-2.5 px-3.5 w-16">Foto</th>
+                      <th className="py-2.5 px-3.5">Judul Paket & Level</th>
+                      <th className="py-2.5 px-3.5 w-36 whitespace-nowrap">Grup</th>
+                      <th className="py-2.5 px-3.5 w-36 whitespace-nowrap">Harga & Cicilan</th>
+                      <th className="py-2.5 px-3.5 w-24 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredLayanan.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center text-slate-500">
+                          Belum ada paket layanan. Klik &quot;+ Muat 3 Paket Robotic Awal&quot; atau &quot;+ Tambah Paket Layanan&quot;.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredLayanan.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="py-2.5 px-3.5 align-middle">
+                            <div className="w-12 h-10 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
+                              <img src={formatImageSrc(item.image)} alt={item.title} className="w-full h-full object-cover" />
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 dark:text-slate-100">{item.title}</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-900 whitespace-nowrap">
+                                {item.level}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{item.description}</p>
+                          </td>
+                          <td className="py-2.5 px-3.5 align-middle whitespace-nowrap">
+                            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-bold font-mono bg-blue-600 text-white uppercase tracking-wider whitespace-nowrap shadow-xs">
+                              {item.group || 'Paket Robotic'}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 align-middle whitespace-nowrap">
+                            <p className="font-extrabold font-mono text-slate-900 dark:text-white">{item.price}</p>
+                            {item.installment && (
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">{item.installment}</p>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => openEditModal(item)}
+                              className="px-2 py-1 text-blue-600 hover:text-blue-800 font-semibold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setItemToDelete({ id: item.id, title: item.title })}
+                              className="px-2 py-1 text-rose-600 hover:text-rose-800 font-semibold ml-1"
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB POSTER */}
+          {activeTab === 'poster' && (
+            <div className="border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="py-2.5 px-3.5 w-16">Foto</th>
+                      <th className="py-2.5 px-3.5">Judul Poster</th>
+                      <th className="py-2.5 px-3.5 w-40 whitespace-nowrap">Kategori</th>
+                      <th className="py-2.5 px-3.5">Deskripsi</th>
+                      <th className="py-2.5 px-3.5 w-24 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredPosters.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center text-slate-500">
+                          Belum ada poster. Klik &quot;+ Muat 2 Poster Awal&quot; atau &quot;+ Tambah Poster&quot;.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPosters.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="py-2.5 px-3.5 align-middle">
+                            <div className="w-12 h-14 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
+                              <img src={formatImageSrc(item.image)} alt={item.title} className="w-full h-full object-cover" />
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-slate-100">
+                            {item.title}
+                          </td>
+                          <td className="py-2.5 px-3.5 align-middle whitespace-nowrap">
+                            <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-semibold font-mono bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900 whitespace-nowrap">
+                              {item.category}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 text-slate-500 dark:text-slate-400">
+                            {item.description || '-'}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => openEditModal(item)}
+                              className="px-2 py-1 text-blue-600 hover:text-blue-800 font-semibold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setItemToDelete({ id: item.id, title: item.title })}
+                              className="px-2 py-1 text-rose-600 hover:text-rose-800 font-semibold ml-1"
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB TENAGA PENGAJAR */}
+          {activeTab === 'pengajar' && (
+            <div className="border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="py-2.5 px-3.5 w-16">Foto</th>
+                      <th className="py-2.5 px-3.5">Nama & Gelar</th>
                       <th className="py-2.5 px-3.5">Peran / Jabatan</th>
                       <th className="py-2.5 px-3.5">Institusi</th>
                       <th className="py-2.5 px-3.5 w-24 text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {(activeTab === 'pengajar' ? filteredPengajar : filteredPembimbing).length === 0 ? (
+                    {filteredPengajar.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-10 text-center text-slate-500">
-                          Tidak ada data profil yang sesuai.
+                          Tidak ada data pengajar yang sesuai.
                         </td>
                       </tr>
                     ) : (
-                      (activeTab === 'pengajar' ? filteredPengajar : filteredPembimbing).map((item) => (
+                      filteredPengajar.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
                           <td className="py-2.5 px-3.5 align-middle">
                             <div className="w-10 h-10 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                              <img
-                                src={formatImageSrc(item.image)}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = '/images/hero_robot.webp';
-                                }}
-                              />
+                              <img src={formatImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover" />
                             </div>
                           </td>
-                          <td className="py-2.5 px-3.5 align-middle font-medium text-slate-900 dark:text-white">
-                            {item.name}
-                          </td>
-                          <td className="py-2.5 px-3.5 align-middle text-slate-600 dark:text-slate-400">
-                            {item.role}
-                          </td>
-                          <td className="py-2.5 px-3.5 align-middle text-slate-500 dark:text-slate-400">
-                            {item.institution}
-                          </td>
-                          <td className="py-2.5 px-3.5 align-middle text-right space-x-1.5 whitespace-nowrap">
+                          <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-slate-100">{item.name}</td>
+                          <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-300 font-medium">{item.role}</td>
+                          <td className="py-2.5 px-3.5 text-slate-500 dark:text-slate-400">{item.institution}</td>
+                          <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
                             <button
                               onClick={() => openEditModal(item)}
-                              className="px-2 py-1 rounded text-xs font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                              className="px-2 py-1 text-blue-600 hover:text-blue-800 font-semibold"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => setItemToDelete({ id: item.id, title: item.name })}
-                              className="px-2 py-1 rounded text-xs font-medium text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+                              className="px-2 py-1 text-rose-600 hover:text-rose-800 font-semibold ml-1"
                             >
                               Hapus
                             </button>
@@ -565,46 +915,111 @@ export default function AdminDashboard({
               </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Confirmation Dialog for Delete - Flat Design */}
-      {itemToDelete && (
-        <div className="fixed inset-0 z-60 bg-slate-900/70 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded border border-slate-200 dark:border-slate-800 p-5 text-slate-900 dark:text-slate-100">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-2">
-              Hapus Data
-            </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
-              Apakah Anda yakin ingin menghapus data <strong className="text-slate-900 dark:text-slate-100">&ldquo;{itemToDelete.title}&rdquo;</strong>? Dokumen ini akan langsung dihapus dari Firebase.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setItemToDelete(null)}
-                className="px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                className="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-colors"
-              >
-                Hapus
-              </button>
+          {/* TAB DOSEN PEMBIMBING */}
+          {activeTab === 'pembimbing' && (
+            <div className="border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="py-2.5 px-3.5 w-16">Foto</th>
+                      <th className="py-2.5 px-3.5">Nama & Gelar</th>
+                      <th className="py-2.5 px-3.5">Peran / Jabatan</th>
+                      <th className="py-2.5 px-3.5">Institusi</th>
+                      <th className="py-2.5 px-3.5 w-24 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredPembimbing.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center text-slate-500">
+                          Tidak ada data pembimbing yang sesuai.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPembimbing.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="py-2.5 px-3.5 align-middle">
+                            <div className="w-10 h-10 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
+                              <img src={formatImageSrc(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-slate-100">{item.name}</td>
+                          <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-300 font-medium">{item.role}</td>
+                          <td className="py-2.5 px-3.5 text-slate-500 dark:text-slate-400">{item.institution}</td>
+                          <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => openEditModal(item)}
+                              className="px-2 py-1 text-blue-600 hover:text-blue-800 font-semibold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setItemToDelete({ id: item.id, title: item.name })}
+                              className="px-2 py-1 text-rose-600 hover:text-rose-800 font-semibold ml-1"
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {itemToDelete && (
+          <div className="fixed inset-0 z-60 bg-slate-900/70 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded border border-slate-200 dark:border-slate-800 p-5 text-slate-900 dark:text-slate-100 space-y-4">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Konfirmasi Penghapusan</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Apakah Anda yakin ingin menghapus data <strong className="text-slate-900 dark:text-white">&quot;{itemToDelete.title}&quot;</strong>? Perubahan ini akan langsung diperbarui di database Firebase.
+              </p>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setItemToDelete(null)}
+                  className="px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="px-3.5 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors"
+                >
+                  Hapus Permanen
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Form Modal for Create & Edit - Flat Design */}
+      </div>
+
+      {/* Form Modal for Create & Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 z-60 bg-slate-900/70 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded border border-slate-200 dark:border-slate-800 overflow-hidden text-slate-900 dark:text-slate-100">
             <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                {editingItem ? 'Edit Data' : 'Tambah Data'}: {activeTab === 'berita' ? 'Berita & Kegiatan' : activeTab === 'pengajar' ? 'Tenaga Pengajar' : 'Dosen Pembimbing'}
+                {editingItem ? 'Edit Data' : 'Tambah Data'}: {
+                  activeTab === 'berita'
+                    ? 'Berita & Kegiatan'
+                    : activeTab === 'layanan'
+                    ? 'Paket Layanan (Paket Robotic)'
+                    : activeTab === 'poster'
+                    ? 'Poster Promosi'
+                    : activeTab === 'pengajar'
+                    ? 'Tenaga Pengajar'
+                    : 'Dosen Pembimbing'
+                }
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -615,7 +1030,9 @@ export default function AdminDashboard({
             </div>
 
             <form onSubmit={handleSave} className="p-5 space-y-3.5 max-h-[78vh] overflow-y-auto text-xs">
-              {activeTab === 'berita' ? (
+              
+              {/* FORM BERITA */}
+              {activeTab === 'berita' && (
                 <>
                   <div className="space-y-1">
                     <label className="font-semibold text-slate-700 dark:text-slate-300">Judul Berita *</label>
@@ -678,7 +1095,165 @@ export default function AdminDashboard({
                     />
                   </div>
                 </>
-              ) : (
+              )}
+
+              {/* FORM PAKET LAYANAN */}
+              {activeTab === 'layanan' && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700 dark:text-slate-300">Grup Paket *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formGroup}
+                        onChange={(e) => setFormGroup(e.target.value)}
+                        placeholder="Paket Robotic"
+                        className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-bold"
+                      />
+                      <span className="text-[10px] text-slate-400">Gunakan &quot;Paket Robotic&quot; agar masuk 1 grup</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700 dark:text-slate-300">Level / Tingkatan *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formLevel}
+                        onChange={(e) => setFormLevel(e.target.value)}
+                        placeholder="Contoh: Level 1 • Pemula"
+                        className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">Judul Paket *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      placeholder="Contoh: Tema Animal (AI-Fantasy-Zoo)"
+                      className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700 dark:text-slate-300">Harga Paket *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(e.target.value)}
+                        placeholder="Contoh: Rp2.000.000"
+                        className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-mono font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700 dark:text-slate-300">Skema Cicilan / Catatan</label>
+                      <input
+                        type="text"
+                        value={formInstallment}
+                        onChange={(e) => setFormInstallment(e.target.value)}
+                        placeholder="Contoh: Cicilan Rp500.000 / 4 Bulan"
+                        className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">Deskripsi Paket *</label>
+                    <textarea
+                      required
+                      rows={2}
+                      value={formExcerpt}
+                      onChange={(e) => setFormExcerpt(e.target.value)}
+                      placeholder="Deskripsi singkat materi dan capaian paket..."
+                      className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 resize-y"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">Poin Fitur / Materi Pembelajaran (1 baris per poin)</label>
+                    <textarea
+                      rows={4}
+                      value={formFeatures}
+                      onChange={(e) => setFormFeatures(e.target.value)}
+                      placeholder="Kit Hardware: AI-Fantasy-Zoo Kit (Modul Kinetik & Gear Motor)&#10;Materi Utama: Pengenalan struktur mekanis, rasio gir, & keseimbangan&#10;Fokus Keterampilan: Melatih kecerdasan spasial & daya cipta&#10;Opsi Kemudahan: Dapat dicicil Rp500.000 / bulan selama 4 bulan"
+                      className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 resize-y font-mono text-[11px]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700 dark:text-slate-300">Tags / Kata Kunci (Pisahkan koma)</label>
+                      <input
+                        type="text"
+                        value={formTags}
+                        onChange={(e) => setFormTags(e.target.value)}
+                        placeholder="mekanik, kinetik, level 1"
+                        className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-semibold text-slate-700 dark:text-slate-300">Teks Tombol CTA</label>
+                      <input
+                        type="text"
+                        value={formButtonText}
+                        onChange={(e) => setFormButtonText(e.target.value)}
+                        placeholder="Pilih Paket Animal"
+                        className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* FORM POSTER */}
+              {activeTab === 'poster' && (
+                <>
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">Judul Poster *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      placeholder="Contoh: Poster 1 - Modul Program"
+                      className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">Kategori / Label Poster</label>
+                    <input
+                      type="text"
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      placeholder="Contoh: Modul Program atau Pendaftaran Kelas"
+                      className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">Deskripsi / Catatan Singkat</label>
+                    <textarea
+                      rows={2}
+                      value={formExcerpt}
+                      onChange={(e) => setFormExcerpt(e.target.value)}
+                      placeholder="Deskripsi singkat mengenai informasi poster ini..."
+                      className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 resize-y"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* FORM TEAM (PENGAJAR / PEMBIMBING) */}
+              {(activeTab === 'pengajar' || activeTab === 'pembimbing') && (
                 <>
                   <div className="space-y-1">
                     <label className="font-semibold text-slate-700 dark:text-slate-300">Nama Lengkap & Gelar *</label>
@@ -720,7 +1295,7 @@ export default function AdminDashboard({
               {/* Image Upload Area - Auto-converts to SVG */}
               <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
                 <label className="font-semibold text-slate-700 dark:text-slate-300 block">
-                  Unggah Gambar (Otomatis Dikonversi ke Format SVG)
+                  Unggah Gambar (Otomatis Dikonversi &amp; Disimpan sebagai Format SVG ke Firebase)
                 </label>
                 <div className="flex items-center gap-3">
                   <input
@@ -740,12 +1315,17 @@ export default function AdminDashboard({
 
                 {formImage && (
                   <div className="mt-2 flex items-center gap-2">
-                    <div className="w-16 h-12 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                      <img src={formatImageSrc(formImage)} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="w-16 h-14 rounded border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+                      <img src={formatImageSrc(formImage)} alt="Preview" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
-                      ✓ Gambar siap disimpan ke Firestore
-                    </span>
+                    <div>
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold block">
+                        ✓ Gambar format SVG siap disimpan ke Firestore
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Direct Document Storage (Zero Blob Delay)
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

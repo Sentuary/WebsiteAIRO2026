@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       const resized = await sharp(fileBuffer)
         .rotate()
         .resize({ width: 600, height: 600, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 80 })
+        .webp({ quality: 75, effort: 5 })
         .toBuffer();
 
       const meta = await sharp(resized).metadata();
