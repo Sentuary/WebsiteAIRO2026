@@ -169,9 +169,10 @@ export default function RobotikLandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [showAdminDashboard, setShowAdminDashboard] = useState<boolean>(false);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [showSessionDialog, setShowSessionDialog] = useState<boolean>(false);
 
   // Admin Login Session Expiration Constant: Tepat 1 Jam (3600 detik)
-  const ADMIN_SESSION_EXPIRY_MS = 60 * 60 * 1000; // 1 Jam Expired Token/Sesi
+  const ADMIN_SESSION_EXPIRY_MS = 10 * 1000; // 1 Jam Expired Token/Sesi
 
   // Sync login session with Firebase Auth and enforce 1-hour expiration limit
   useEffect(() => {
@@ -221,11 +222,11 @@ export default function RobotikLandingPage() {
 
       // Cek Batas Kadaluarsa Token Sesi 1 Jam
       if (now - sessionStart >= ADMIN_SESSION_EXPIRY_MS) {
-        alert('Waktu sesi login Admin telah habis (berlaku 1 jam). Silakan login kembali.');
-        handleLogout();
-        return;
+        setShowSessionDialog(true);
       }
     };
+
+    checkAdminSession();
 
     // Periksa status sesi setiap 3 detik
     const intervalId = setInterval(checkAdminSession, 3000);
@@ -644,6 +645,9 @@ export default function RobotikLandingPage() {
             </button>
           </div>
         </div>
+
+       
+
         <nav className="flex flex-col gap-1">
           <a href="#beranda" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Beranda</a>
           <a href="#berita" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg transition-colors">Berita</a>
@@ -678,6 +682,51 @@ export default function RobotikLandingPage() {
           </a>
         </div>
       </div>
+
+       {showSessionDialog && (
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl mx-4">
+
+      <div className="flex justify-center mb-5">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+          <svg
+            className="h-8 w-8 text-red-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-bold text-center text-gray-900">
+        Sesi Login Berakhir
+      </h2>
+
+      <p className="mt-3 text-center text-gray-500">
+        Waktu sesi login Admin telah habis karena sudah mencapai batas
+        1 jam. Silakan login kembali untuk melanjutkan aktivitas.
+      </p>
+
+      <button
+        onClick={() => {
+          setShowSessionDialog(false);
+          handleLogout();
+        }}
+        className="mt-7 w-full rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700"
+      >
+        Login Kembali
+      </button>
+
+    </div>
+  </div>
+)}
 
       {isMobileMenuOpen && (
         <div 
