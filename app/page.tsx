@@ -172,7 +172,7 @@ export default function RobotikLandingPage() {
   const [showSessionDialog, setShowSessionDialog] = useState<boolean>(false);
 
   // Admin Login Session Expiration Constant: Tepat 1 Jam (3600 detik)
-  const ADMIN_SESSION_EXPIRY_MS = 10 * 1000; // 1 Jam Expired Token/Sesi
+  const ADMIN_SESSION_EXPIRY_MS = 60 * 60 * 1000; // 1 Jam Expired Token/Sesi
 
   // Sync login session with Firebase Auth and enforce 1-hour expiration limit
   useEffect(() => {
