@@ -6,7 +6,6 @@ import { SiGoogleforms } from "react-icons/si";
 import dynamic from 'next/dynamic';
 import type { BeritaItem, TeamMemberItem, PosterItem, LayananItem } from "@/components/AdminDashboard";
 import { INITIAL_LAYANAN, INITIAL_POSTERS } from "@/lib/initialData";
-import { Analytics } from "@vercel/analytics/next"
 
 const AdminDashboard = dynamic(() => import("@/components/AdminDashboard"), {
   ssr: false,
@@ -561,7 +560,6 @@ export default function RobotikLandingPage() {
                 </svg>
               )}
             </button>
-            <Analytics />
 
             {isLoggedIn && (
               <button
